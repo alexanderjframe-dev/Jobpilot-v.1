@@ -8,6 +8,8 @@ JobPilot can import Remotive, Jobicy, Remote OK, and configured Greenhouse/Lever
 
 **Start with [ALL_JOBS_SETUP.md](ALL_JOBS_SETUP.md)** for setup and costs/credits, location settings, source coverage, and limits. No job aggregator can guarantee literally every opening or that a listing is still active.
 
+By default, **Discover Jobs hides senior/leadership titles and postings that explicitly list experience beyond the Preferences → Maximum required experience setting**. Users may check **Include senior or high-experience jobs** to see them, labeled as higher-experience roles. Existing saved jobs remain available with a warning. These are conservative keyword-based checks, not automatic verification of your qualifications or the employer's requirements.
+
 ## iPhone and hosted access
 
 Use [IPHONE_SETUP.md](IPHONE_SETUP.md) for the mobile-friendly, password-protected hosting setup. The included `render.yaml` describes a **paid** Render service with a persistent disk. This repository alone is not a live website.

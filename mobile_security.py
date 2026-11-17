@@ -9,7 +9,11 @@ from fastapi.responses import PlainTextResponse
 
 
 def hosted_mode():
-    return os.environ.get("JOBPILOT_HOSTED", "").strip().lower() in ("1", "true", "yes")
+    # Render sets RENDER=true for hosted services. Never allow missing manual
+    # configuration to silently expose applicant personal data publicly.
+    on_render = os.environ.get("RENDER", "").strip().lower() == "true"
+    explicit = os.environ.get("JOBPILOT_HOSTED", "").strip().lower() in ("1", "true", "yes")
+    return on_render or explicit
 
 
 def install_security(app):

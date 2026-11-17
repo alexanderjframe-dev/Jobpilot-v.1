@@ -56,6 +56,37 @@ DEGREE_PATTERNS = [
  (1, re.compile(r'\b(?:high school diploma|high school graduate|ged|general educational development|high school equivalency)\b',re.I)),
 ]
 LOWER_ROLE_WORDS = {'job','jobs','work','full','time','part','level','entry','junior','associate','trainee','positions','position','remote'}
+# Broad, ordinary jobs can be suitable even if the user's favorite titles
+# don't mention the exact posting title. Specialized/management checks still
+# run BEFORE this allowance; this is not a blanket eligibility bypass.
+REGULAR_JOB_RE = re.compile(
+    r'\b(?:cashier|retail|sales associate|store associate|store clerk|'
+    r'warehouse|fulfill?ment|fulfilment|picker|packer|package handler|'
+    r'stocker|stock(?:ing)? associate|stock clerk|shelf stock|'
+    r'grocery clerk|courtesy clerk|bagger|cart attendant|'
+    r'customer service|customer care|customer support|call center|call centre|'
+    r'contact center|contact centre|support agent|'
+    r'food service|fast food|restaurant crew|crew member|team member|'
+    r'barista|dishwasher|kitchen helper|food prep|'
+    r'housekeep(?:er|ing)|custodian|janitor|cleaner|'
+    r'general labou?rer?|production associate|production worker|'
+    r'assembly worker|assembler|manufacturing associate|'
+    r'shipping clerk|receiving clerk|sortation associate|'
+    r'office assistant|administrative assistant|receptionist|'
+    r'front desk agent|data entry clerk|file clerk|'
+    r'parking attendant|theater attendant|hotel attendant|'
+    r'delivery driver|courier|package delivery|driver helper|'
+    r'entry.level (?:technician|support|assistant|representative)|'
+    r'help desk|service desk|desktop support|it support|'
+    r'technical support)\b',
+    re.I
+)
+
+def regular_job_title(title):
+    """Conservative indicator of routine entry-level work, not a guarantee."""
+    return bool(REGULAR_JOB_RE.search(str(title or '')))
+
+
 MANAGEMENT_RE = re.compile(
  r'\b(?:manager|supervisor|superintendent|head of|director|executive|chief|president|'
  r'principal|team lead|shift lead|crew lead|crew leader|lead associate|'
@@ -185,6 +216,10 @@ def area_reason(job,cfg):
 def role_reason(job,cfg):
     title=str(job.get('title') or '').lower()
     targets=[s.strip().lower() for s in re.split(r'[,;\n]',str(cfg.get('target_titles') or '')) if s.strip()]
+    # The user asked for ordinary jobs, not only their named favorite roles.
+    # A specific preference can still be applied by disabling this toggle.
+    if cfg.get('regular_jobs_enabled',True) and regular_job_title(title):
+        return ''
     if not targets:
         return 'Select target job titles in Preferences'
     for target in targets:
@@ -217,9 +252,10 @@ def strict_reason(job,cfg,profile,qualification_note=None):
     # General management and leadership jobs aren't normal entry-level matches.
     if MANAGEMENT_RE.search(title):
         return 'Management or leadership role is not an entry-level match'
-    if len(str(job.get('description') or '').strip()) < 20:
-        return 'Job description lacks enough detail to check requirements'
     description=str(job.get('description') or '')
+    # Short excerpts are normal in some local feeds. Do not claim the applicant
+    # is ineligible merely because a routine listing has a short description.
+    # Display a separate "verify requirements" caution in the UI instead.
     # Explicit mandatory credentials cannot be inferred from resume keywords.
     for match in CREDENTIAL_RE.finditer(description[:11000]):
         context=description[max(0,match.start()-65):min(len(description),match.end()+70)]
@@ -243,3 +279,11 @@ def strict_reason(job,cfg,profile,qualification_note=None):
     if role:
         return role
     return ''
+
+def review_note(job):
+    """Tell users when a candidate is a possible match, not verified eligibility."""
+    desc=str(job.get('description') or '').strip()
+    if len(desc)<100:
+        return 'Limited job description. Verify education, duties and qualifications on the employer site.'
+    return ''
+

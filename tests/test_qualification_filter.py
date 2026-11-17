@@ -99,7 +99,8 @@ class QualificationMatchTests(unittest.TestCase):
         cfg=dict(self.server.DEFAULTS)
         for title in ("Spanish Interpreter", "Japanese-English Translator",
                       "Multilingual Customer Service Representative",
-                      "Bilingual Sales Associate", "Language Interpreter (Lao)"):
+                      "Bilingual Sales Associate", "Language Interpreter (Lao)",
+                      "Language Interpretation Specialist"):
             with self.subTest(title=title):
                 note=self.server.qualification_note({"title":title,"description":""},cfg)
                 self.assertTrue(note, title)

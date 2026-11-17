@@ -145,6 +145,14 @@ class StrictEligibilityTests(unittest.TestCase):
             **CFG,"regular_jobs_enabled":False
         }))
 
+    def test_engineer_role_is_not_a_regular_team_member_match(self):
+        self.assertIn("target roles",self.check(job(
+            "Software Engineer - Team Member",desc=
+            "Work with team members and write full-stack production software.")))
+        self.assertIn("target roles",self.check(job(
+            "Sales Engineer, Customer Support",desc=
+            "Provide customer support and solution architecture for enterprise customers.")))
+
     def test_regular_job_education_and_location_are_still_hard_limits(self):
         self.assertIn("outside",self.check(job("Cashier","Austin, TX")).lower())
         self.assertIn("above",self.check(job(

@@ -64,6 +64,26 @@ class JobPilotTests(unittest.TestCase):
   self.assertEqual(latest['profile']['education_level'],'ged')
   self.assertEqual(latest['config']['location'],'Austin, TX')
 
+ def test_regular_local_job_is_visible_without_exact_target_title(self):
+  urls=('https://example.org/regular-dishwasher-test','https://example.org/territory-manager-test')
+  try:
+   for title,url in (('Dishwasher',urls[0]),('Territory Manager',urls[1])):
+    result=self.client.post('/api/jobs/manual',json={
+     'company':'Test Employer','title':title,'url':url,
+     'location':'Austin, TX','description':'Short description.'
+    })
+    self.assertEqual(result.status_code,200,result.text)
+   jobs=self.client.get('/api/jobs').json()['jobs']
+   everyday=next(j for j in jobs if j['url']==urls[0])
+   self.assertTrue(everyday['eligible'])
+   self.assertIn('Verify',everyday['review_note'])
+   self.assertFalse(any(j['url']==urls[1] for j in jobs))
+   all_jobs=self.client.get('/api/jobs?include_advanced=true').json()['jobs']
+   self.assertTrue(next(j for j in all_jobs if j['url']==urls[1])['advanced'])
+  finally:
+   with self.module.db() as conn:
+    conn.execute('DELETE FROM jobs WHERE url IN (?,?)',urls)
+
  def test_profile_not_allowed_to_set_resume_path(self):
   r=self.client.put('/api/profile',json={'values':{'first_name':'Example','resume_path':'/tmp/malicious'}})
   self.assertEqual(r.status_code,200)

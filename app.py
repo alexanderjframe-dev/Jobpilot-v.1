@@ -336,7 +336,7 @@ async def bootstrap():
  with db() as c:
   counts={r['status']:r['n'] for r in c.execute('SELECT status,COUNT(*) AS n FROM jobs GROUP BY status')}
   stats={'total':sum(counts.values()),'strong':c.execute('SELECT COUNT(*) AS n FROM jobs WHERE score>=? AND sample=0',(get_kv('config')['match_threshold'],)).fetchone()['n'], 'approved':counts.get('approved',0),'applied':counts.get('applied',0),'sample':c.execute('SELECT COUNT(*) n FROM jobs WHERE sample=1').fetchone()['n']}
- return {'hosted':hosted_mode(),'config':get_kv('config'),'profile':get_kv('profile'),'sliders':[dict(zip(['key','name','default','min','max','step','group','help'],s)) for s in SLIDERS],'stats':stats,'last_scan':get_kv('last_scan')}
+ return {'hosted':hosted_mode(),'provider_keys':{'adzuna':bool(os.environ.get('ADZUNA_APP_ID') and os.environ.get('ADZUNA_APP_KEY')),'jsearch':bool(os.environ.get('JSEARCH_API_KEY')),'usajobs':bool(os.environ.get('USAJOBS_API_KEY') and os.environ.get('USAJOBS_EMAIL'))},'config':get_kv('config'),'profile':get_kv('profile'),'sliders':[dict(zip(['key','name','default','min','max','step','group','help'],s)) for s in SLIDERS],'stats':stats,'last_scan':get_kv('last_scan')}
 
 @app.put('/api/config')
 async def save_config(payload:JsonObject):

@@ -64,6 +64,19 @@ class LiveLocalProviderTests(unittest.TestCase):
         self.assertTrue(all(url==API_URL and p["where"]=="Dallas, TX" for url,p,_ in client.calls))
         self.assertTrue(all(p["radius_miles"]==25 for _,p,_ in client.calls))
 
+    def test_provider_city_and_state_fields_are_combined_for_exact_matching(self):
+        row=provider_record("Stock Clerk",uid=11)
+        row["location"]="Dallas"
+        normalized=as_jobs({"jobs":[row]})[0]
+        self.assertEqual(normalized["location"],"Dallas, TX")
+        self.assertEqual(strict_reason(normalized,CFG,PROFILE),"")
+        remote=provider_record("Customer Support Agent",uid=12)
+        remote["location"]="Remote"
+        remote["remote"]=True
+        normalized_remote=as_jobs({"jobs":[remote]})[0]
+        self.assertEqual(normalized_remote["location"],"Remote")
+        self.assertIn("Remote",strict_reason(normalized_remote,CFG,PROFILE))
+
     def test_filters_requirements_from_structured_provider_fields(self):
         jobs=as_jobs({"jobs":[
             provider_record("Cashier",uid=1,edu="bachelor",desc="Help shoppers and collect payments."),

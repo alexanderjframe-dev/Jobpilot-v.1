@@ -89,7 +89,7 @@ def adzuna_jobs(data):
 def jsearch_jobs(data):
     payload = data.get("data") if isinstance(data, dict) else None
     if isinstance(payload, dict):
-        payload = payload.get("jobs") or payload.get("data")
+        payload = payload.get("jobs", payload.get("data"))
     if not isinstance(payload, list):
         raise ValueError("JSearch response did not contain jobs")
     jobs = []
@@ -168,7 +168,10 @@ async def discover_more(client, cfg, items, counts, errors):
             counts[name] = len(selected)
         except Exception as exc:
             counts[name] = 0
-            errors.append(f"{name}: {str(exc)[:140]}")
+            # HTTP exceptions may embed API keys in request URLs. Never send
+            # provider credentials back to the browser through scan errors.
+            status = getattr(getattr(exc, "response", None), "status_code", None)
+            errors.append(f"{name}: HTTP {status}" if status else f"{name}: {type(exc).__name__}")
 
     if cfg.get("jobicy_enabled", True):
         await pull("Jobicy", "https://jobicy.com/api/jobs", jobicy_jobs,

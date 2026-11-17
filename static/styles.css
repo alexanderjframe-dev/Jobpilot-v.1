@@ -56,3 +56,11 @@
 .confirm-area-label{display:flex!important;flex-direction:row!important;align-items:center;gap:10px;font-size:13px}
 .confirm-area-label input{width:19px;height:19px;flex:0 0 19px;accent-color:#8e7afa}
 @media(max-width:700px){.strict-setup-actions .btn{flex:1 1 auto}}
+
+/* Local job-board shortcuts and honest no-match explanations. */
+.external-search-shortcuts{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px}
+.external-search-shortcuts .mini-button{min-height:40px}
+.external-search-shortcuts .subtle{font-size:12px}
+#zeroResultsHint[hidden]{display:none}
+#zeroResultsHint{line-height:1.6;font-size:13px}
+@media(max-width:700px){.external-search-shortcuts .mini-button{flex:1 1 auto}.external-search-shortcuts .subtle{flex-basis:100%}}

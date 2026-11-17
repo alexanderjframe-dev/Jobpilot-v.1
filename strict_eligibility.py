@@ -61,7 +61,7 @@ MANAGEMENT_RE = re.compile(
  r'principal|team lead|shift lead|crew lead|crew leader|lead associate|'
  r'lead (?:customer|retail|warehouse|technical|it|support|sales|store|service|operations))\b',re.I)
 CREDENTIAL_RE = re.compile(
- r"\b(?:cdl(?:[- ]?[ab])?|commercial driver['’]s license|"
+ r"\b(?:cdl(?:[- ]?[ab])?|commercial driver['’]s license|driver['’]s licen[cs]e|"
  r"comp\s?tia\s?(?:a\+|security\+|network\+)|"
  r"professional licen[cs]e|active (?:rn|lpn) license|security clearance|"
  r"forklift certification|pmp certification)(?=$|\W)",re.I)

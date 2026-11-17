@@ -1,5 +1,6 @@
 """Additional documented job feeds; no direct scraping of job-board websites."""
 from __future__ import annotations
+import asyncio
 import os
 import re
 from datetime import datetime, timezone
@@ -173,11 +174,14 @@ async def discover_more(client, cfg, items, counts, errors):
             status = getattr(getattr(exc, "response", None), "status_code", None)
             errors.append(f"{name}: HTTP {status}" if status else f"{name}: {type(exc).__name__}")
 
+    public_requests = []
     if cfg.get("jobicy_enabled", True):
-        await pull("Jobicy", "https://jobicy.com/api/jobs", jobicy_jobs,
-                   params={"count": min(200, cap), "geo": "usa"})
+        public_requests.append(pull("Jobicy", "https://jobicy.com/api/jobs", jobicy_jobs,
+                                    params={"count": min(200, cap), "geo": "usa"}))
     if cfg.get("remoteok_enabled", True):
-        await pull("Remote OK", "https://remoteok.com/api", remoteok_jobs)
+        public_requests.append(pull("Remote OK", "https://remoteok.com/api", remoteok_jobs))
+    if public_requests:
+        await asyncio.gather(*public_requests)
 
     location = str(cfg.get("location") or "").strip()[:120]
     adzuna_id = os.environ.get("ADZUNA_APP_ID", "").strip()

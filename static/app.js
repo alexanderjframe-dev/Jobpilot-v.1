@@ -46,7 +46,12 @@ function renderFeedCoverage(){
  const samples=Number(state.boot.stats?.sample||0);
  const info='Last scan: '+(sources.length?sources.join(' • '):'no sources enabled')+
    '. '+(Number(scan.new)||0)+' new listings added; '+(Number(scan.processed)||0)+' source listings checked (duplicates may be skipped).';
- const caveat=' Remotive supplies remote roles; Greenhouse and Lever need employer board tokens in Preferences. City and match scores do not create more listings.';
+ const keys=state.boot?.provider_keys||{};
+ const notConnected=[['adzuna','Adzuna'],['jsearch','JSearch'],['usajobs','USAJOBS']]
+   .filter(([id])=>state.boot.config?.[id+'_enabled']!==false&&!keys[id])
+   .map(([,name])=>name);
+ const keyNotice=notConnected.length?' Extra local aggregators not connected: '+notConnected.join(', ')+'. Add their API keys privately in Render to import their jobs.':'';
+ const caveat=' Remotive, Jobicy and Remote OK focus on remote roles; employer boards need tokens. Local job imports require configured aggregators. Search buttons above open external boards without importing listings.'+keyNotice;
  const issues=problems.length?' Feed errors: '+problems.join('; ')+'.':'';
  const demo=samples?' '+samples+' FICTIONAL DEMO listings are also stored; they are not real jobs.':'';
  box.textContent=info+caveat+issues+demo+' Open each employer listing to confirm it is still accepting applications.';

@@ -129,8 +129,35 @@ class StrictEligibilityTests(unittest.TestCase):
         self.assertIn("Management",self.check(job("Store Manager")))
         self.assertIn("Management",self.check(job("Sales Supervisor")))
 
-    def test_unverified_description_blocked(self):
-        self.assertIn("description",self.check(job("Retail Associate",desc="")))
+    def test_short_regular_listing_is_a_possible_match_not_an_auto_rejection(self):
+        from strict_eligibility import review_note
+        sample=job("Retail Associate",desc="")
+        self.assertEqual(self.check(sample),"")
+        self.assertIn("Verify",review_note(sample))
+
+    def test_regular_jobs_do_not_need_exact_target_keywords(self):
+        for title in ("Cashier", "Grocery Clerk", "Dishwasher", "Crew Member",
+                      "Housekeeper", "General Laborer", "Production Associate",
+                      "Janitor", "Front Desk Agent", "Shipping Clerk", "Packer"):
+            with self.subTest(title=title):
+                self.assertEqual(self.check(job(title)), "")
+        self.assertIn("target roles",self.check(job("Dishwasher"),cfg={
+            **CFG,"regular_jobs_enabled":False
+        }))
+
+    def test_regular_job_education_and_location_are_still_hard_limits(self):
+        self.assertIn("outside",self.check(job("Cashier","Austin, TX")).lower())
+        self.assertIn("above",self.check(job(
+            "Cashier","Dallas, TX","onsite",
+            "Bachelor's degree required. Daily payments and customer service.")))
+        self.assertIn("Management",self.check(job("Warehouse Manager")))
+        self.assertIn("fluency",self.check(job(
+            "Customer Service Associate","Dallas, TX","onsite",
+            "Must be fluent in Mandarin. Helps customers with sales and returns.")))
+        self.assertIn("certification",self.check(job(
+            "Warehouse Associate","Dallas, TX","onsite",
+            "Must have forklift certification. Picking and packing items.")))
+
 
     def test_profile_levels_are_explicit_not_inferred(self):
         self.assertIn("ged",EDUCATION_LEVELS)

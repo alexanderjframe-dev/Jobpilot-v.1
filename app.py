@@ -329,10 +329,11 @@ async def fetch_jobs():
     items.extend(arr[:cfg['max_jobs_per_feed']]); counts[name]=len(arr[:cfg['max_jobs_per_feed']])
    except Exception as e:
     errors.append(f'{name}: {str(e)[:120]}');counts[name]=0
+  remotive_task=None
   if cfg.get('remote_feed_enabled',True):
    def remotive(js):
     return [{'source':'Remotive','source_id':x.get('id'),'title':x.get('title'),'company':x.get('company_name'),'location':x.get('candidate_required_location') or 'Remote','work_mode':'remote','employment_type':x.get('job_type') or '', 'description':clean_html(x.get('description')),'url':x.get('url'),'salary':x.get('salary') or '','posted_at':normalized_date(x.get('publication_date'))} for x in js.get('jobs',[])]
-   await grab('Remotive','https://remotive.com/api/remote-jobs?limit='+str(cfg['max_jobs_per_feed']),remotive)
+   remotive_task=asyncio.create_task(grab('Remotive','https://remotive.com/api/remote-jobs?limit='+str(cfg['max_jobs_per_feed']),remotive))
   def sites(value): return list(dict.fromkeys([x.strip().lower() for x in re.split('[,;\n]',value or '') if re.fullmatch('[a-zA-Z0-9_-]{2,60}',x.strip())]))[:12]
   for token in sites(cfg.get('greenhouse_boards')):
    def gh(js,token=token):
@@ -355,6 +356,8 @@ async def fetch_jobs():
     return out
    await grab('Lever: '+token,'https://api.lever.co/v0/postings/'+token+'?mode=json',lev)
   await discover_more(client, cfg, items, counts, errors)
+  if remotive_task is not None:
+   await remotive_task
   if local_task is not None:
    success=await local_task
    if success:

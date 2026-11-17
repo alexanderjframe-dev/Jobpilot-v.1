@@ -48,6 +48,22 @@ class JobPilotTests(unittest.TestCase):
   self.assertEqual(r.json()['config']['target_hourly'],36)
   r=self.client.get('/api/jobs');self.assertEqual(len(r.json()['jobs']),1)
 
+ def test_strict_setup_rejects_invalid_education_and_location(self):
+  original=self.client.get('/api/bootstrap').json()
+  self.assertEqual(original['profile']['education_level'],'ged')
+  self.assertTrue(original['config']['location_confirmed'])
+  bad_area=self.client.put('/api/config',json={'values':{
+   'location':'Anywhere','location_confirmed':True
+  }})
+  self.assertEqual(bad_area.status_code,400)
+  bad_level=self.client.put('/api/profile',json={'values':{
+   'education_level':'assume_doctorate'
+  }})
+  self.assertEqual(bad_level.status_code,400)
+  latest=self.client.get('/api/bootstrap').json()
+  self.assertEqual(latest['profile']['education_level'],'ged')
+  self.assertEqual(latest['config']['location'],'Austin, TX')
+
  def test_profile_not_allowed_to_set_resume_path(self):
   r=self.client.put('/api/profile',json={'values':{'first_name':'Example','resume_path':'/tmp/malicious'}})
   self.assertEqual(r.status_code,200)

@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="theme-color" content="#090e1d"/><title>JobPilot — Your next move</title>
+<meta name="theme-color" content="#090e1d"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="JobPilot"/>
+<link rel="manifest" href="/static/manifest.webmanifest"/>
+<link rel="icon" type="image/svg+xml" href="/static/icon.svg"/><title>JobPilot — Your next move</title>
 <link rel="stylesheet" href="/static/styles.css"/>
 </head>
 <body>
@@ -23,7 +28,7 @@
     </nav>
     <div class="sidebar-spacer"></div>
     <div class="sidebar-help"><div class="sidebar-help-icon">✳</div><strong>Build steady momentum.</strong><span>Build consistent income and keep your options open.</span><button class="btn secondary small" data-action="open-plan">View your next steps →</button></div>
-    <div class="sidebar-footer"><span class="status-dot"></span> Local & private <span class="version">v1.0</span></div>
+    <div class="sidebar-footer"><span class="status-dot"></span> <span id="workspaceMode">Local & private</span> <span class="version">v1.1</span></div>
   </aside>
   <div class="main-wrap">
     <header class="topbar"><div class="mobile-brand">✦ jobpilot.</div><button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">☰</button>
@@ -61,7 +66,7 @@
         <div class="notice"><span class="notice-symbol">⌁</span><div><strong>You're always in control.</strong><p>Job discovery and scoring can happen automatically. Sending applications requires you to approve each job first. On supported employer forms, the assistant can prefill your details; auto-submit is optional and disabled by default.</p></div></div>
         <div class="queue-tabs"><button class="qtab active" data-qtab="approved">Approved <span id="approvedTabNum">0</span></button><button class="qtab" data-qtab="needs_review">Needs review</button><button class="qtab" data-qtab="applied">Applied</button><button class="qtab" data-qtab="interview">Interviews</button><button class="qtab" data-qtab="saved">Saved</button></div>
         <div id="queueJobs" class="job-list"></div>
-        <div class="queue-footer"><span>Application assistance launches a visible browser on this computer. It does not run in the cloud.</span><a href="https://playwright.dev/python/docs/browsers" target="_blank" rel="noreferrer">Browser setup ↗</a></div>
+        <div class="queue-footer"><span><span id="applyModeNote">Application assistance launches a visible browser on this computer. It does not run in the cloud.</span></span><a href="https://playwright.dev/python/docs/browsers" target="_blank" rel="noreferrer">Browser setup ↗</a></div>
       </section>
 
       <section class="page" id="page-preferences">
@@ -76,9 +81,9 @@
       </section>
 
       <section class="page" id="page-profile">
-        <div class="page-heading"><div><div class="eyebrow">PRIVATE BY DEFAULT</div><h1>Your applicant <span class="gradient-word">profile.</span></h1><p>Used to prefill forms for jobs you've approved. Stored locally on your computer.</p></div><button class="btn primary" data-action="save-profile">✓ Save profile</button></div>
-        <div class="profile-grid"><div class="profile-card"><div class="section-head"><div><span class="section-overline">THE BASICS</span><h3>Contact details</h3></div><div class="lock-pill">♧ On this device</div></div><div class="form-grid"><label>First name <span>*</span><input data-profile="first_name" autocomplete="given-name"/></label><label>Last name <span>*</span><input data-profile="last_name" autocomplete="family-name"/></label><label>Email <span>*</span><input data-profile="email" type="email" autocomplete="email"/></label><label>Phone<input data-profile="phone" autocomplete="tel"/></label><label>City<input data-profile="city"/></label><label>State<input data-profile="state"/></label><label>LinkedIn URL<input data-profile="linkedin" placeholder="https://linkedin.com/in/..."/></label><label>Portfolio URL<input data-profile="portfolio" placeholder="https://..."/></label><label>Authorized to work? (fill truthfully)<select data-profile="work_authorized"><option value="">Not set</option><option value="yes">Yes</option><option value="no">No</option></select></label><label>Need visa sponsorship? (fill truthfully)<select data-profile="sponsorship"><option value="">Not set</option><option value="yes">Yes</option><option value="no">No</option></select></label></div></div>
-        <div class="profile-card"><div class="section-head"><div><span class="section-overline">YOUR STORY</span><h3>Experience & resume</h3></div></div><label>Professional summary<textarea data-profile="summary" rows="4" placeholder="A few honest sentences about your strengths…"></textarea></label><label>Work experience<textarea data-profile="experience" rows="5" placeholder="Jobs you've held, tasks, achievements…"></textarea></label><label>Education<textarea data-profile="education" rows="3" placeholder="Schooling or certifications (if applicable)…"></textarea></label><label>Skills (comma-separated)<textarea data-profile="skills" rows="3" placeholder="Customer service, Excel, problem solving…"></textarea></label><div class="resume-upload"><div class="upload-icon">▣</div><div><strong id="resumeName">No resume uploaded yet</strong><small>PDF, DOCX or TXT, up to 5 MB. Stored locally, never posted until you approve an application.</small></div><label class="btn secondary file-button">Upload resume<input id="resumeFile" type="file" accept=".pdf,.docx,.txt" hidden/></label></div></div></div>
+        <div class="page-heading"><div><div class="eyebrow">PRIVATE BY DEFAULT</div><h1>Your applicant <span class="gradient-word">profile.</span></h1><p>Used to prefill forms for jobs you've approved. <span id="profileStorageNote">Stored locally on your computer.</span></p></div><button class="btn primary" data-action="save-profile">✓ Save profile</button></div>
+        <div class="profile-grid"><div class="profile-card"><div class="section-head"><div><span class="section-overline">THE BASICS</span><h3>Contact details</h3></div><div class="lock-pill">♧ <span id="storageLabel">On this device</span></div></div><div class="form-grid"><label>First name <span>*</span><input data-profile="first_name" autocomplete="given-name"/></label><label>Last name <span>*</span><input data-profile="last_name" autocomplete="family-name"/></label><label>Email <span>*</span><input data-profile="email" type="email" autocomplete="email"/></label><label>Phone<input data-profile="phone" autocomplete="tel"/></label><label>City<input data-profile="city"/></label><label>State<input data-profile="state"/></label><label>LinkedIn URL<input data-profile="linkedin" placeholder="https://linkedin.com/in/..."/></label><label>Portfolio URL<input data-profile="portfolio" placeholder="https://..."/></label><label>Authorized to work? (fill truthfully)<select data-profile="work_authorized"><option value="">Not set</option><option value="yes">Yes</option><option value="no">No</option></select></label><label>Need visa sponsorship? (fill truthfully)<select data-profile="sponsorship"><option value="">Not set</option><option value="yes">Yes</option><option value="no">No</option></select></label></div></div>
+        <div class="profile-card"><div class="section-head"><div><span class="section-overline">YOUR STORY</span><h3>Experience & resume</h3></div></div><label>Professional summary<textarea data-profile="summary" rows="4" placeholder="A few honest sentences about your strengths…"></textarea></label><label>Work experience<textarea data-profile="experience" rows="5" placeholder="Jobs you've held, tasks, achievements…"></textarea></label><label>Education<textarea data-profile="education" rows="3" placeholder="Schooling or certifications (if applicable)…"></textarea></label><label>Skills (comma-separated)<textarea data-profile="skills" rows="3" placeholder="Customer service, Excel, problem solving…"></textarea></label><div class="resume-upload"><div class="upload-icon">▣</div><div><strong id="resumeName">No resume uploaded yet</strong><small>PDF, DOCX or TXT, up to 5 MB. <span id="resumeStorageNote">Stored locally, never posted until you approve an application.</span></small></div><label class="btn secondary file-button">Upload resume<input id="resumeFile" type="file" accept=".pdf,.docx,.txt" hidden/></label></div></div></div>
         <div class="privacy-note">✧ Profile data stays in this local app's <code>data/</code> folder. Never share this folder or commit it to a public repository.</div>
       </section>
 

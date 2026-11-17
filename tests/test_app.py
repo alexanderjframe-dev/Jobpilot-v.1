@@ -12,6 +12,8 @@ class JobPilotTests(unittest.TestCase):
   sys.modules.pop('app',None)
   cls.module=importlib.import_module('app')
   cls.client=TestClient(cls.module.app)
+  cls.client.put('/api/profile',json={'values':{'education_level':'ged'}})
+  cls.client.put('/api/config',json={'values':{'location':'Austin, TX','location_confirmed':True,'location_aliases':'Round Rock, TX'}})
  @classmethod
  def tearDownClass(cls):cls.temp.cleanup()
 

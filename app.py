@@ -411,10 +411,11 @@ async def save_config(payload:JsonObject):
  # Only a user-confirmed, structured city/state may drive strict location matching.
  if updated.get('location_confirmed') and not parsed_area(updated.get('location')):
   raise HTTPException(400,'Enter a real city and US state, e.g. Dallas, TX, before confirming your search area')
- if updated.get('location')!=old.get('location'):
-  if 'location_confirmed' not in payload.values:updated['location_confirmed']=False
-  if updated.get('location_aliases')==DEFAULTS['location_aliases']:
-   updated['location_aliases']=''  # Prevent Austin starter suburbs following a changed city.
+ if updated.get('location')!=old.get('location') and 'location_confirmed' not in payload.values:
+  updated['location_confirmed']=False
+ # Old default aliases must never silently count as a newly chosen search area.
+ if updated.get('location')!=DEFAULTS['location'] and updated.get('location_aliases')==DEFAULTS['location_aliases']:
+  updated['location_aliases']=''
  # no automatic submits in recurring scans; mode only allows manually approved per-job run
  set_kv('config',updated);recalculate();log('Preferences updated')
  return {'ok':True,'config':updated}

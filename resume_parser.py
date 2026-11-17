@@ -22,6 +22,18 @@ HEADINGS = {
  'certifications':'education', 'licenses and certifications':'education',
  'skills':'skills', 'technical skills':'skills', 'core skills':'skills', 'key skills':'skills',
  'core competencies':'skills', 'skills and abilities':'skills',
+ 'professional overview':'summary', 'career highlights':'summary',
+ 'about me':'summary', 'about':'summary', 'the value i bring':'summary',
+ 'what i bring':'summary', 'value i bring':'summary',
+ 'overview':'summary', 'personal statement':'summary',
+ 'key strengths':'skills', 'core strengths':'skills', 'professional skills':'skills',
+ 'areas of expertise':'skills', 'areas of strength':'skills',
+ 'skills and strengths':'skills', 'skills strengths':'skills',
+ 'core skills strengths':'skills', 'core skills':'skills',
+ 'skills abilities':'skills', 'relevant skills':'skills', 'tools and skills':'skills',
+ 'tools and technology':'skills', 'technical proficiencies':'skills',
+ 'competencies':'skills', 'strengths':'skills', 'qualifications':'skills',
+ 'professional strengths':'skills', 'skills highlights':'skills',
 }
 FIELD_MAX = {'summary':3500,'experience':5000,'education':4000,'skills':2000}
 
@@ -41,11 +53,63 @@ NAME_NOISE = {
 }
 STOP_SECTION_HEADINGS = {
  'references','languages','interests','awards','projects','volunteer work',
- 'additional information','contact','contact information','about me',
- 'achievements','the value i bring','what i bring','the skills i bring',
- 'the experience i bring','the bring','professional highlights',
- 'personal details','career highlights','portfolio','links',
+ 'additional information','contact','contact information',
+ 'achievements','the skills i bring','the experience i bring','the bring',
+ 'personal details','portfolio','links',
 }
+
+def normalized_label(line: str) -> str:
+    return re.sub(r'\s+', ' ', re.sub(r'[^a-z0-9]+', ' ', line.lower())).strip()
+
+
+def explicit_skill_fallback(text: str) -> str:
+    """Only use concrete skills/areas literally mentioned in the resume."""
+    terms = (
+        ('customer service', 'Customer service'), ('customer support', 'Customer support'),
+        ('problem solving', 'Problem solving'), ('problem-solving', 'Problem solving'),
+        ('communication', 'Communication'), ('time management', 'Time management'),
+        ('sales', 'Sales'), ('leadership', 'Leadership'), ('operations', 'Operations'),
+        ('delivery', 'Delivery'), ('deliveries', 'Deliveries'),
+        ('inventory', 'Inventory'), ('data entry', 'Data entry'),
+        ('cash handling', 'Cash handling'), ('scheduling', 'Scheduling'),
+        ('excel', 'Excel'), ('microsoft office', 'Microsoft Office'),
+        ('python', 'Python'), ('javascript', 'JavaScript'),
+        ('project management', 'Project management'), ('customer updates', 'Customer updates'),
+        ('point of sale', 'Point of sale'), ('pos', 'POS'),
+    )
+    found = []
+    for phrase, label in terms:
+        if re.search(r'(?<!\w)' + re.escape(phrase) + r'(?!\w)', text, re.I) and label not in found:
+            found.append(label)
+    return ', '.join(found[:12]) if len(found) >= 2 else ''
+
+
+def experience_summary(experience: str) -> str:
+    """Lightly rephrase only an explicit responsibility, never invent one."""
+    lines = [line.strip(' •*-\t') for line in experience.splitlines() if line.strip()]
+    for line in lines[:14]:
+        if len(line) < 35 or len(line) > 210 or '@' in line or '|' in line:
+            continue
+        match = re.match(
+            r'^(organize|manage|coordinate|provide|handle|support|deliver|process|'
+            r'maintain|assist|lead|help|track|schedule|prepare|resolve|serve)\b\s+(.+)',
+            line, re.I
+        )
+        if not match:
+            continue
+        gerunds = {
+            'organize':'organizing','manage':'managing','coordinate':'coordinating',
+            'provide':'providing','handle':'handling','support':'supporting',
+            'deliver':'delivering','process':'processing','maintain':'maintaining',
+            'assist':'assisting','lead':'leading','help':'helping','track':'tracking',
+            'schedule':'scheduling','prepare':'preparing','resolve':'resolving',
+            'serve':'serving',
+        }
+        action = gerunds[match.group(1).lower()]
+        detail = match.group(2).rstrip(' .;')
+        return ('Experience ' + action + ' ' + detail + '.')[:350]
+    return ''
+
 
 def plausible_name(line: str) -> list[str] | None:
     """A strictly limited candidate, not an assertion of identity."""
@@ -158,10 +222,18 @@ def parse_resume(text: str) -> dict[str, str]:
     active = None
     sections: dict[str, list[str]] = {'summary':[], 'experience':[], 'education':[], 'skills':[]}
     for index, line in enumerate(lines):
-        key = re.sub(r'\s+', ' ', line.lower().strip(' :-_#')).strip()
+        key = normalized_label(line)
         if key in HEADINGS:
             active = HEADINGS[key]
             continue
+        # Also handle "Skills: ..." and "Professional Summary: ..." on one line.
+        if ':' in line:
+            label, body = line.split(':', 1)
+            if normalized_label(label) in HEADINGS:
+                active = HEADINGS[normalized_label(label)]
+                if body.strip():
+                    sections[active].append(body.strip())
+                continue
         # Stop when the resume changes to an unmodeled section or when text
         # extraction jumps into a repeated contact masthead/column.
         if key in STOP_SECTION_HEADINGS:
@@ -176,11 +248,17 @@ def parse_resume(text: str) -> dict[str, str]:
     for key, content in sections.items():
         if content:
             result[key] = '\n'.join(content)[:FIELD_MAX[key]].strip()
-    # Inline skills labels also occur in compact single-column resumes.
+    # On resumes without a conventional Skills section, look for exact
+    # skill phrases explicitly mentioned outside URLs and email addresses.
     if not result.get('skills'):
-        for line in lines[:45]:
-            m = re.match(r'^(?:skills|technical skills|core competencies)\s*:\s*(.{3,2000})$',line,re.I)
-            if m:
-                result['skills'] = m.group(1).strip()
-                break
+        skill_source = '\n'.join(line for line in lines if '@' not in line and 'http' not in line.lower())
+        derived = explicit_skill_fallback(skill_source)
+        if derived:
+            result['skills'] = derived
+    # If no summary is printed, draft one from a stated work responsibility.
+    # Never invent experience and leave the field blank when evidence is thin.
+    if not result.get('summary') and result.get('experience'):
+        draft = experience_summary(result['experience'])
+        if draft:
+            result['summary'] = draft
     return {k:v for k,v in result.items() if v}

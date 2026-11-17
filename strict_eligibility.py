@@ -262,6 +262,8 @@ def strict_reason(job,cfg,profile,qualification_note=None):
     # General management and leadership jobs aren't normal entry-level matches.
     if MANAGEMENT_RE.search(title):
         return 'Management or leadership role is not an entry-level match'
+    if PROFESSIONAL_TITLE_RE.search(title):
+        return 'Specialized professional role outside ordinary entry-level recommendations'
     description=str(job.get('description') or '')
     # Short excerpts are normal in some local feeds. Do not claim the applicant
     # is ineligible merely because a routine listing has a short description.

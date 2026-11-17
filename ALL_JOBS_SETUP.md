@@ -2,6 +2,16 @@
 
 JobPilot cannot truthfully retrieve every job on the internet. Employers use private and public systems, and many postings expire. It now combines documented public APIs, optional broader aggregation APIs, and direct search buttons for major job boards.
 
+## Live local job listings — no account or key required
+
+JobPilot can now search local U.S. employer career-site postings through the **VeritaHire public job-search API** (an independent third-party service, not Indeed). This source is **enabled by default**. In Applicant Profile, choose your completed education level. In Preferences, enter and confirm the city/state where you want to work and turn on **Live local employer jobs**. Then tap **Find jobs**.
+
+JobPilot sends only your chosen search city and broad search terms (cashier, warehouse, customer service, crew, and a selected target role) to the provider. Your name, resume, and personal contact details are **not** sent. The API documents a 30-search-per-hour limit per server IP, so we cache successful scans for 30 minutes; a provider may return fewer than five pages of results or be unavailable. City search uses a 25-mile provider radius, then the existing strict filter still restricts normal results to the exact cities you selected. The API's job URLs link to employer application pages, and employers must be checked for current opening and requirements.
+
+This is a *limited free search API*, not unrestricted access to every employer job. If the source is blocked, rate-limited, or returns zero, look at the source breakdown under Discover. One-tap local Indeed searches remain available without an API key but those external results are not automatically imported.
+
+Official provider specification: https://veritahire.com/openapi.json . Provider documentation: https://veritahire.com/developers/ . Provider-independent proof of each posting cannot be guaranteed.
+
 ## Immediate sources — no account or key required
 
 - Remotive: remote positions.

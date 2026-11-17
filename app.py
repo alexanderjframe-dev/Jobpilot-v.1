@@ -162,13 +162,16 @@ ADVANCED_TITLE_RE = re.compile(
  r'architect|technical|tech|product|developer)|'
  r'(?:software|data|engineering|platform|security|product) lead|'
  r'(?:general|regional|district|engineering) manager)\b',re.I)
-EXP_YEARS_RE = re.compile(r'\b(\d{1,2})\s*(?:\+|[-–]\s*\d{1,2})?\s*(?:years?|yrs?)\b',re.I)
+EXP_YEARS_RE = re.compile(r'\b(\d{1,2})\s*(?:\+|plus\b|[-–]\s*\d{1,2})?\s*(?:years?|yrs?)\b',re.I)
+ENTERPRISE_ROLE_RE = re.compile(r'\b(?:sales engineer|solutions? engineer|account executive|sales executive|customer success manager|technical account manager|solutions? architect|sales manager|account manager)\b',re.I)
 
 def qualification_note(job,cfg):
  """Conservative title/required-years warning; not a verified eligibility ruling."""
  title=str(job.get('title') or '')
  if ADVANCED_TITLE_RE.search(title):
   return 'Senior or leadership-level title; outside entry-level recommendations'
+ if re.search(r'\benterprise\b',title,re.I) and ENTERPRISE_ROLE_RE.search(title):
+  return 'Enterprise-level sales or client leadership role; outside entry-level recommendations'
  desc=str(job.get('description') or '')[:10000]
  limit=max(0,int(cfg.get('max_experience_years',2)))
  for match in EXP_YEARS_RE.finditer(desc):

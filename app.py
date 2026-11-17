@@ -152,6 +152,39 @@ def classify_mode(title,location,description='',remote_override=None):
 def token_set(s):
  return {x for x in re.findall(r'[a-z0-9+#.]+', (s or '').lower()) if len(x)>2 and x not in {'and','the','with','from','that','this','for','you','our','are','will','your','job','work','more','have'}}
 
+# Senior-level titles and clearly stated experience requirements should not
+# qualify as normal entry-level recommendations just because pay/skills align.
+ADVANCED_TITLE_RE = re.compile(
+ r'\b(?:senior|sr\.?|principal|staff|distinguished|director|vice president|'
+ r'vp|chief|head of|cto|tech(?:nical)? lead|engineering lead|'
+ r'lead (?:software|full[\s-]?stack|back[\s-]?end|front[\s-]?end|rails|'
+ r'python|java|data|machine|security|devops|platform|cloud|engineer|'
+ r'architect|technical|tech|product|developer)|'
+ r'(?:software|data|engineering|platform|security|product) lead|'
+ r'(?:general|regional|district|engineering) manager)\b',re.I)
+EXP_YEARS_RE = re.compile(r'\b(\d{1,2})\s*(?:\+|[-–]\s*\d{1,2})?\s*(?:years?|yrs?)\b',re.I)
+
+def qualification_note(job,cfg):
+ """Conservative title/required-years warning; not a verified eligibility ruling."""
+ title=str(job.get('title') or '')
+ if ADVANCED_TITLE_RE.search(title):
+  return 'Senior or leadership-level title; outside entry-level recommendations'
+ desc=str(job.get('description') or '')[:10000]
+ limit=max(0,int(cfg.get('max_experience_years',2)))
+ for match in EXP_YEARS_RE.finditer(desc):
+  years=int(match.group(1))
+  if years<=limit or years>35:
+   continue
+  context=desc[max(0,match.start()-85):min(len(desc),match.end()+90)].lower()
+  # Avoid tagging tenure, company age or bonus qualifications.
+  if not re.search(r'\b(experience|required|minimum|at least|must have|'
+                   r'qualifications|hands.on|professional|work history)\b',context):
+   continue
+  if re.search(r'\b(preferred|nice to have|bonus|desirable|optional)\b',context) and not re.search(r'\b(required|must have|minimum|at least)\b',context):
+   continue
+  return f'Listing mentions {years} years of experience; your selected limit is {limit}'
+ return ''
+
 def score_job(job, cfg, profile):
  title=(job.get('title') or '').lower(); txt=title+' '+(job.get('description') or '').lower()
  preferred=[x.strip().lower() for x in (cfg.get('target_titles','')+';'+cfg.get('skills','')+';'+profile.get('skills','')).replace(',', ';').split(';') if x.strip()]
@@ -204,7 +237,10 @@ def score_job(job, cfg, profile):
  score=round(sum(weights[k]*metrics[k] for k in weights)/denominator)
  if cfg.get('work_type')=='remote' and mode!='remote':score=max(0,score-28)
  if cfg.get('work_type')=='onsite' and mode=='remote':score=max(0,score-15)
+ level_warning=qualification_note(job,cfg)
+ if level_warning:score=min(score,30)
  reasons=[]
+ if level_warning:reasons.append(level_warning)
  if title_overlap: reasons.append('Title aligns with your interests')
  if mode=='remote':reasons.append('Remote-friendly')
  elif loc>=90: reasons.append('Near your target area')
@@ -289,12 +325,15 @@ async def fetch_jobs():
  return get_kv('last_scan')
 
 def jobs_dict(rows):
- out=[]
+ out=[];cfg=get_kv('config')
  for r in rows:
   d=dict(r)
   for key in ('reasons','metrics'):
    try:d[key]=json.loads(d[key])
    except:d[key]=[] if key=='reasons' else {}
+  warning=qualification_note(d,cfg)
+  d['advanced']=bool(warning)
+  d['qualification_note']=warning
   d['sample']=bool(d['sample']);out.append(d)
  return out
 
@@ -389,12 +428,13 @@ async def upload_resume(file:UploadFile=File(...)):
  return {'ok':True,'filename':p['resume_filename'],'autofill':{'filled':filled,'found':list(extracted.keys()),'warning':warning or ('No recognizable applicant details found in this resume.' if not extracted else '')}}
 
 @app.get('/api/jobs')
-async def list_jobs(query:str='',status:str='',min_score:int=0,sort:str='score',include_samples:bool=True,limit:int=500):
+async def list_jobs(query:str='',status:str='',min_score:int=0,sort:str='score',include_samples:bool=True,include_advanced:bool=False,limit:int=500):
  with db() as c:
   rows=jobs_dict(c.execute('SELECT * FROM jobs ORDER BY score DESC,created_at DESC LIMIT 2500').fetchall())
  q=query.strip().lower()
  if q:rows=[j for j in rows if q in (j['title']+' '+j['company']+' '+j['location']+' '+j['description'][:1500]).lower()]
  if status:rows=[j for j in rows if j['status']==status]
+ if not include_advanced:rows=[j for j in rows if not j['advanced'] or j['status'] not in ('discovered','skipped')]
  cfg=get_kv('config')
  if cfg.get('work_type')=='remote':rows=[j for j in rows if j['work_mode']=='remote']
  must=[x.strip().lower() for x in cfg.get('must_have_keywords','').split(',') if x.strip()]

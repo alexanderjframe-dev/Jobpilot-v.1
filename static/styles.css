@@ -40,3 +40,9 @@
 .external-search-actions input{flex:1 1 220px;width:auto;min-width:0}
 .external-search-actions .btn{min-height:44px}
 @media(max-width:700px){.external-search-actions input{flex-basis:100%;width:100%}.external-search-actions .btn{flex:1 1 auto}}
+
+.experience-filter{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0 8px;font-size:12px;color:var(--text)}
+.experience-filter label{display:flex;gap:8px;align-items:center;min-height:40px;cursor:pointer;font-weight:600}
+.experience-filter input{width:17px;height:17px;accent-color:#8c78e8}
+.experience-filter small{color:var(--muted);line-height:1.4}
+.job-experience-warning{border:1px solid #ae8356;border-radius:9px;padding:12px 14px;color:#e7ba86;background:rgba(184,122,57,.1);line-height:1.5;font-size:13px}

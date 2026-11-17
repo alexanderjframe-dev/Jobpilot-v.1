@@ -19,7 +19,7 @@ def job(title, location="Dallas, TX", mode="onsite", desc="Paid training and cus
 
 class StrictEligibilityTests(unittest.TestCase):
     def check(self,j,cfg=None,p=None):
-        return strict_reason(j,cfg or CFG,p or PROFILE)
+        return strict_reason(j,CFG if cfg is None else cfg,PROFILE if p is None else p)
 
     def test_missing_education_requires_confirmation(self):
         self.assertIn("education",self.check(job("Retail Associate"),p={}).lower())

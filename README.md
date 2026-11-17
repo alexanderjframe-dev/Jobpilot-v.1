@@ -8,7 +8,18 @@ JobPilot can import Remotive, Jobicy, Remote OK, and configured Greenhouse/Lever
 
 **Start with [ALL_JOBS_SETUP.md](ALL_JOBS_SETUP.md)** for setup and costs/credits, location settings, source coverage, and limits. No job aggregator can guarantee literally every opening or that a listing is still active.
 
-By default, **Discover Jobs hides senior/leadership titles, roles above your preferred experience limit, interpreter/translator or bilingual roles needing language fluency, and roles visibly requiring professional licenses**. Users may check **Include advanced or specialized jobs** to reveal them. Existing saved jobs remain available, clearly labeled with a qualification warning. These checks are conservative title/description heuristics, not a determination that you're unqualified; JobPilot does not yet verify language fluency or certifications from a resume. Regular entry-level roles remain available.
+## Strict qualification and search-area matching
+
+JobPilot now **requires explicit education and location confirmation before showing ordinary recommended jobs**. It does not guess from a resume heading or from the original Austin starter location.
+
+1. In **Applicant Profile**, choose the highest level of education you actually completed (no diploma, high school, GED, some college, associate, bachelor's, master's, doctorate). Tap **Save Profile**. Your existing free-text education remains editable separately.
+2. In **Preferences**, enter **your target search city and state** (for example, City, TX), select the **I confirm this is my intended search city and state** checkbox, and review the **Nearby cities** list and **Target roles**. Tap **Save Preferences**. Previously unedited Austin-area aliases are removed if you confirm a different city.
+3. In **Discover Jobs**, tap **Find jobs**. The normal results and dashboard display only roles that meet the chosen search area, selected title families, confirmed education level, and basic experience/qualification rules. Remote roles must explicitly establish U.S. or state eligibility. Unknown locations and sparse job descriptions are excluded.
+4. **Show excluded jobs (review only)** is optional and off by default. It is not an eligibility override for automatic queueing. Existing saved jobs remain available for manual review with a warning.
+
+A listing without a stated degree requirement is not automatically a claim that none exists; unknown qualifications cannot be guaranteed. The app intentionally rejects uncertain location/education fits when data is insufficient, so the result count can be much smaller or even zero. Every employer's original posting must still be checked. Live job providers may have stale, misleading, or incomplete descriptions.
+
+
 
 ## iPhone and hosted access
 

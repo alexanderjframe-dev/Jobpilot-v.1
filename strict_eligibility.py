@@ -116,8 +116,22 @@ def remote_area_ok(location,description,applicant_state):
                     break
         if state_match and state_match!=applicant_state:
             return False
+        if state_match==applicant_state:
+            return True  # Explicit candidate residency requirement matches the user.
     positive=re.search(r'\b(?:united states|u\.?s\.?a\.?|u\.?s\.?[- ]based|nationwide|anywhere|worldwide|global|any location)\b',loc,re.I)
     if positive:
+        return True
+    # Some sites publish only "Remote" in location but confirm U.S. eligibility
+    # in the actual description instead.
+    if re.search(
+        r'\b(?:candidates?|applicants?|residents?|employees?|remote workers?)'
+        r'\b.{0,75}\b(?:united states|u\.?s\.?a\.?|u\.?s\.?[- ]based)\b',
+        desc[:2000],re.I
+    ) or re.search(
+        r'\b(?:must|need to|required to)\s+(?:be\s+)?(?:based|located|reside|live)'
+        r'\s+(?:in\s+)?(?:the\s+)?(?:united states|u\.?s\.?a\.?)\b',
+        desc[:2000],re.I
+    ):
         return True
     # Some listings explicitly restrict to a single U.S. state.
     for state_id,name in STATE_NAMES.items():
@@ -147,7 +161,8 @@ def area_reason(job,cfg):
             chosen.append(area)
     for city,state in chosen:
         state_label=STATE_NAMES[state]
-        if re.search(r'(?<!\w)'+re.escape(city)+r'(?!\w)',location,re.I) and re.search(
+        city_re=r'^(?:greater\s+)?'+re.escape(city)+r'(?:\s*,|\s+metropolitan\s+area\s*,)'
+        if re.search(city_re,location,re.I) and re.search(
                 r'\b(?:'+re.escape(state)+r'|'+re.escape(state_label)+r')\b',location,re.I):
             return ''
     return 'Job location is outside your selected city and nearby-city list'

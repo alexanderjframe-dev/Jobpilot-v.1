@@ -79,6 +79,61 @@ class QualificationMatchTests(unittest.TestCase):
              "description":"Required: 7 plus years of customer service experience."}
         self.assertIn("7 years",self.server.qualification_note(job,cfg))
 
+    def test_misspelled_lao_interpreter_is_a_specialist_not_a_normal_match(self):
+        """Regression for the real listing title, including source typos."""
+        cfg=dict(self.server.DEFAULTS)
+        job={
+            "title":"Internatioal Audio/Video Remote Lao/Loatian Interpreter",
+            "location":"USA",
+            "work_mode":"remote",
+            "description":"Provide remote language interpretation for Lao and English speakers.",
+            "salary":"USD 20/hour",
+        }
+        note=self.server.qualification_note(job,cfg)
+        self.assertIn("proficiency",note)
+        score,reasons,_=self.server.score_job(job,cfg,dict(self.server.PROFILE_DEFAULTS))
+        self.assertLessEqual(score,30)
+        self.assertTrue(any("proficiency" in reason for reason in reasons))
+
+    def test_other_language_titles_require_proficiency_check(self):
+        cfg=dict(self.server.DEFAULTS)
+        for title in ("Spanish Interpreter", "Japanese-English Translator",
+                      "Multilingual Customer Service Representative",
+                      "Bilingual Sales Associate", "Language Interpreter (Lao)"):
+            with self.subTest(title=title):
+                note=self.server.qualification_note({"title":title,"description":""},cfg)
+                self.assertTrue(note, title)
+
+    def test_license_roles_flagged_but_regular_entry_level_jobs_remain(self):
+        cfg=dict(self.server.DEFAULTS)
+        for title in ("Registered Nurse", "Licensed Practical Nurse",
+                      "CDL-A Truck Driver", "Licensed Electrician", "Attorney"):
+            with self.subTest(title=title):
+                self.assertIn("license",self.server.qualification_note(
+                    {"title":title,"description":""},cfg))
+        for title in ("Warehouse Associate", "Customer Support Agent",
+                      "Entry Level IT Support", "Delivery Driver",
+                      "Retail Sales Associate", "Assistant Store Manager"):
+            with self.subTest(title=title):
+                self.assertFalse(self.server.qualification_note(
+                    {"title":title,"description":"Paid training provided."},cfg))
+
+    def test_api_hides_interpreter_by_default_and_reveals_on_demand(self):
+        job={
+            "company":"Test Language Staffing","title":"Remote Lao Interpreter",
+            "location":"USA","url":"https://example.org/lao-remote-interpreter",
+            "description":"Fluent Lao and English interpretation required."
+        }
+        res=self.client.post("/api/jobs/manual",json=job)
+        self.assertEqual(res.status_code,200,res.text)
+        normal=self.client.get("/api/jobs").json()
+        self.assertFalse(any(j["title"]==job["title"] for j in normal["jobs"]))
+        self.assertGreaterEqual(normal["hidden_advanced"],1)
+        all_jobs=self.client.get("/api/jobs?include_advanced=true").json()["jobs"]
+        flagged=next(j for j in all_jobs if j["title"]==job["title"])
+        self.assertTrue(flagged["advanced"])
+        self.assertLessEqual(flagged["score"],30)
+
     def test_optional_preferred_years_are_not_hard_blocked(self):
         cfg = dict(self.server.DEFAULTS)
         job = {"title":"Retail Assistant",

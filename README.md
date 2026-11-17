@@ -2,6 +2,12 @@
 
 A local-first job discovery, matching and application management app. Built to help you move toward a more stable job rather than rely on gig work alone.
 
+## Broad job search — new sources
+
+JobPilot can import Remotive, Jobicy, Remote OK, and configured Greenhouse/Lever company boards. Optional Adzuna, JSearch and USAJOBS APIs expand local, web-wide and government jobs when their keys are configured privately in Render. The Discover screen also opens Indeed, Google Jobs and LinkedIn searches directly — these external results are not imported automatically.
+
+**Start with [ALL_JOBS_SETUP.md](ALL_JOBS_SETUP.md)** for setup and costs/credits, location settings, source coverage, and limits. No job aggregator can guarantee literally every opening or that a listing is still active.
+
 ## iPhone and hosted access
 
 Use [IPHONE_SETUP.md](IPHONE_SETUP.md) for the mobile-friendly, password-protected hosting setup. The included `render.yaml` describes a **paid** Render service with a persistent disk. This repository alone is not a live website.

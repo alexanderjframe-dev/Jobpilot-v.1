@@ -18,20 +18,20 @@ from strict_eligibility import parsed_area
 API_URL = "https://veritahire.com/api/jobs-search.php"
 PROVIDER = "VeritaHire local"
 DEFAULT_TERMS = ("cashier", "warehouse", "customer service", "crew member", "stocker")
-MAX_TERMS = 5
+MAX_TERMS = 6
 
 def search_plan(cfg):
     """4-5 deliberately broad searches to respect a shared server IP's rate limit."""
     titles = [x.strip().lower() for x in re.split(r"[,;\n]", str(cfg.get("target_titles") or "")) if x.strip()]
     if cfg.get("regular_jobs_enabled", True):
         terms = list(DEFAULT_TERMS)
-        # Swap the final broad term for one role the user actually requested,
-        # if it is not already represented (e.g. IT support, delivery).
+        # Include an extra user-chosen role (e.g. retail or IT support) on top
+        # of the five ordinary searches. Max six requests per uncached scan.
         for name in titles:
             if name in {"entry level", "entry-level", "any", "all jobs"}:
                 continue
             if name and not any(name in term or term in name for term in terms):
-                terms[-1] = name[:70]
+                terms.append(name[:70])
                 break
     else:
         terms = [x for x in titles if x not in {"entry level", "entry-level", "any", "all jobs"}]

@@ -133,6 +133,9 @@ class QualificationMatchTests(unittest.TestCase):
         flagged=next(j for j in all_jobs if j["title"]==job["title"])
         self.assertTrue(flagged["advanced"])
         self.assertLessEqual(flagged["score"],30)
+        # Tests share a temporary database, so don't pollute the next case.
+        with self.server.db() as conn:
+            conn.execute("DELETE FROM jobs WHERE url=?", (job["url"],))
 
     def test_optional_preferred_years_are_not_hard_blocked(self):
         cfg = dict(self.server.DEFAULTS)

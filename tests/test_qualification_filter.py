@@ -50,6 +50,35 @@ class QualificationMatchTests(unittest.TestCase):
         job["description"] = "2 years of customer service experience."
         self.assertFalse(self.server.qualification_note(job,cfg))
 
+    def test_enterprise_sales_engineer_from_jobicy_is_hidden(self):
+        cfg = dict(self.server.DEFAULTS)
+        job = {
+            "title":"Sales Engineer, Enterprise",
+            "company":"Socket",
+            "location":"USA",
+            "work_mode":"remote",
+            "min_hourly":92,
+            "description": (
+                "Required: 7 plus years of pre-sales experience in a "
+                "Sales Engineering or Solutions Engineering role. "
+                "Hands-on experience with enterprise cybersecurity customers."
+            ),
+        }
+        warning = self.server.qualification_note(job,cfg)
+        self.assertIn("Enterprise-level",warning)
+        self.assertEqual(
+            self.server.EXP_YEARS_RE.search(job["description"]).group(1),"7"
+        )
+        score,reasons,_ = self.server.score_job(job,cfg,dict(self.server.PROFILE_DEFAULTS))
+        self.assertLessEqual(score,30)
+        self.assertTrue(any("Enterprise" in text for text in reasons))
+
+    def test_written_plus_years_is_recognized_without_enterprise_title(self):
+        cfg=dict(self.server.DEFAULTS)
+        job={"title":"Customer Support Specialist",
+             "description":"Required: 7 plus years of customer service experience."}
+        self.assertIn("7 years",self.server.qualification_note(job,cfg))
+
     def test_optional_preferred_years_are_not_hard_blocked(self):
         cfg = dict(self.server.DEFAULTS)
         job = {"title":"Retail Assistant",

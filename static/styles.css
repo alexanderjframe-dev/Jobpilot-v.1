@@ -30,3 +30,5 @@
  .hero-panel{padding:23px 18px}
  .content{padding-left:12px;padding-right:12px}
 }
+
+.feed-coverage{margin:12px 0 18px;padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--muted);font-size:12px;line-height:1.6;overflow-wrap:anywhere}

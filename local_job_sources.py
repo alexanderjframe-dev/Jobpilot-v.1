@@ -81,8 +81,17 @@ def as_jobs(data):
         if not title or not url.startswith(("https://","http://")):
             continue
         location=str(x.get("location") or "").strip()
-        if not location and x.get("city") and x.get("state"):
-            location=f"{x['city']}, {x['state']}"
+        state_code=str(x.get("state") or "").strip().upper()
+        if not location and x.get("city") and state_code:
+            location=f"{x['city']}, {state_code}"
+        # Providers sometimes split City and State into separate fields. Do not
+        # reject "Dallas" when the row independently states state="TX".
+        elif location and "," not in location and re.fullmatch(r"[A-Za-z][A-Za-z .'-]{1,65}",location):
+            if re.fullmatch(r"[A-Z]{2}",state_code) and location.casefold() not in {
+                "remote","usa","united states","nationwide","anywhere","global",
+                "texas","california","florida","new york"
+            }:
+                location=f"{location}, {state_code}"
         description=as_text(x.get("description") or x.get("job_description") or x.get("snippet"))
         requirements=[]
         edu=normalized_education(x.get("req_edu_level"))

@@ -97,8 +97,14 @@ def initialize():
   CREATE TABLE IF NOT EXISTS activity(id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, level TEXT, message TEXT, job_id TEXT);
   CREATE TABLE IF NOT EXISTS application_attempts(id INTEGER PRIMARY KEY AUTOINCREMENT, job_id TEXT, launched_at TEXT);
   ''')
-  if not c.execute("SELECT 1 FROM kv WHERE key='config'").fetchone():
+  existing=c.execute("SELECT value FROM kv WHERE key='config'").fetchone()
+  if not existing:
    c.execute("INSERT INTO kv(key,value) VALUES ('config',?)",(json.dumps(DEFAULTS),))
+  else:
+   saved=json.loads(existing['value'])
+   missing={key:value for key,value in DEFAULTS.items() if key not in saved}
+   if missing:
+    c.execute("UPDATE kv SET value=? WHERE key='config'",(json.dumps({**missing,**saved}),))
   if not c.execute("SELECT 1 FROM kv WHERE key='profile'").fetchone():
    c.execute("INSERT INTO kv(key,value) VALUES ('profile',?)",(json.dumps(PROFILE_DEFAULTS),))
 

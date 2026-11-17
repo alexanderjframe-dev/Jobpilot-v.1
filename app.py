@@ -164,6 +164,11 @@ ADVANCED_TITLE_RE = re.compile(
  r'(?:general|regional|district|engineering) manager)\b',re.I)
 EXP_YEARS_RE = re.compile(r'\b(\d{1,2})\s*(?:\+|plus\b|[-–]\s*\d{1,2})?\s*(?:years?|yrs?)\b',re.I)
 ENTERPRISE_ROLE_RE = re.compile(r'\b(?:sales engineer|solutions? engineer|account executive|sales executive|customer success manager|technical account manager|solutions? architect|sales manager|account manager)\b',re.I)
+# Roles with essential language proficiency or professional licenses should not
+# appear as ordinary matches without a way to verify those qualifications.
+LANGUAGE_ROLE_RE = re.compile(r'\\b(?:interpreters?|translators?|linguists?)\\b',re.I)
+MULTILINGUAL_ROLE_RE = re.compile(r'\\b(?:bilingual|multilingual|tri\\s?lingual)\\b',re.I)
+LICENSED_ROLE_RE = re.compile(r'\\b(?:registered nurse|licensed practical nurse|physician|attorney|lawyer|dentist|pharmacist|commercial pilot|airline pilot|certified public accountant|cdl(?:[ -]?[ab])?|licensed\\s+\\w+(?:\\s+\\w+)?)\\b',re.I)
 
 def qualification_note(job,cfg):
  """Conservative title/required-years warning; not a verified eligibility ruling."""
@@ -172,6 +177,12 @@ def qualification_note(job,cfg):
   return 'Senior or leadership-level title; outside entry-level recommendations'
  if re.search(r'\benterprise\b',title,re.I) and ENTERPRISE_ROLE_RE.search(title):
   return 'Enterprise-level sales or client leadership role; outside entry-level recommendations'
+ if LANGUAGE_ROLE_RE.search(title):
+  return 'Interpreter/translator role requires proficiency in the stated language(s); JobPilot has not verified your fluency'
+ if MULTILINGUAL_ROLE_RE.search(title):
+  return 'Bilingual or multilingual role requires language proficiency that JobPilot has not verified'
+ if LICENSED_ROLE_RE.search(title):
+  return 'Role likely requires a specific professional license or certification; verify requirements before applying'
  desc=str(job.get('description') or '')[:10000]
  limit=max(0,int(cfg.get('max_experience_years',2)))
  for match in EXP_YEARS_RE.finditer(desc):

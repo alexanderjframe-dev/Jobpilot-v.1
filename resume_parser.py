@@ -25,6 +25,56 @@ HEADINGS = {
 }
 FIELD_MAX = {'summary':3500,'experience':5000,'education':4000,'skills':2000}
 
+# A heading such as "THE BRING" is not a person's name. Prefer leaving
+# names empty over inserting a slogan into an application.
+NAME_NOISE = {
+ 'the','a','an','my','our','your','what','who','why','how','i','we','and','of',
+ 'this','that','these','those','to','for','with','from','in','at','by',
+ 'bring','value','story','next','future','career','goal','goals','strengths',
+ 'skills','experience','education','summary','profile','contact',
+ 'work','employment','professional','employment','history','qualifications',
+ 'customer','service','software','developer','manager','assistant',
+ 'associate','engineer','sales','leadership','operations','resume',
+ 'curriculum','vitae','high','school','college','university','academy',
+ 'institute','diploma','degree','certificate','certification','team',
+ 'strong','results','driven','proven','reliable','independent',
+}
+STOP_SECTION_HEADINGS = {
+ 'references','languages','interests','awards','projects','volunteer work',
+ 'additional information','contact','contact information','about me',
+ 'achievements','the value i bring','what i bring','the skills i bring',
+ 'the experience i bring','the bring','professional highlights',
+ 'personal details','career highlights','portfolio','links',
+}
+
+def plausible_name(line: str) -> list[str] | None:
+    """A strictly limited candidate, not an assertion of identity."""
+    candidate = re.sub(r'^name\s*:\s*', '', line.strip(), flags=re.I)
+    candidate = re.split(r'\s*[|•·]\s*', candidate)[0].strip()
+    if len(candidate)>60 or re.search(r'[@:/\\0-9]', candidate):
+        return None
+    parts = candidate.split()
+    if not 2 <= len(parts) <= 3:
+        return None
+    if not all(re.fullmatch(r"[A-Za-z][A-Za-z'.-]{1,24}", part) for part in parts):
+        return None
+    if any(part.lower().strip('.-') in NAME_NOISE for part in parts):
+        return None
+    return parts
+
+def looks_like_repeated_masthead(line: str, next_line: str) -> bool:
+    """Stop a section if PDF reading order has jumped to a second name/header."""
+    return bool(
+        line.isupper()
+        and plausible_name(line)
+        and (
+            re.search(r'\s/\s', next_line)
+            or EMAIL_RE.search(next_line)
+            or PHONE_RE.search(next_line)
+        )
+    )
+
+
 
 def extract_resume_text(raw: bytes, suffix: str) -> tuple[str, str]:
     """Returns (text, warning). Extraction failures do not block saving the file."""
@@ -81,24 +131,16 @@ def parse_resume(text: str) -> dict[str, str]:
         if not re.search(r'linkedin\.com|mailto:|jobboard|indeed\.com', url, re.I):
             result['portfolio'] = url
             break
-    # Only accept likely full names near the top. Never interpret a job title as a name.
-    for candidate in lines[:9]:
-        candidate = re.sub(r'^(?:name)\s*:\s*', '', candidate, flags=re.I)
-        candidate = re.split(r'\s*[|•·]\s*', candidate)[0].strip()
-        if any(ch in candidate for ch in '@:/\\0123456789') or len(candidate)>60:
-            continue
-        if candidate.lower().strip(' :') in HEADINGS or candidate.lower() in ('resume', 'curriculum vitae'):
-            continue
-        parts = candidate.split()
-        if not 2 <= len(parts) <= 4:
-            continue
-        if not all(re.fullmatch(r"[A-Za-z][A-Za-z'.-]*", p) for p in parts):
-            continue
-        if any(p.lower() in {'professional','software','developer','manager','customer','service','resume','assistant','associate','engineer','college','university'} for p in parts):
-            continue
-        result['first_name'] = parts[0]
-        result['last_name'] = parts[-1]
-        break
+    # A contact name should be near the top. If the candidate looks like a
+    # section title/slogan, leave the field blank for the user to review.
+    if email or phone:
+        for candidate in lines[:7]:
+            if candidate.lower().strip(' :-_#') in HEADINGS:
+                break
+            parts = plausible_name(candidate)
+            if parts:
+                result['first_name'], result['last_name'] = parts[0], parts[-1]
+                break
     # Only parse labelled addresses or a contact line with a valid US state abbreviation.
     for line in lines[:18]:
         if len(line) > 100:
@@ -115,13 +157,18 @@ def parse_resume(text: str) -> dict[str, str]:
             break
     active = None
     sections: dict[str, list[str]] = {'summary':[], 'experience':[], 'education':[], 'skills':[]}
-    for line in lines:
+    for index, line in enumerate(lines):
         key = re.sub(r'\s+', ' ', line.lower().strip(' :-_#')).strip()
         if key in HEADINGS:
             active = HEADINGS[key]
             continue
-        # Don't indiscriminately absorb references, languages or personal details into the last section.
-        if key in {'references', 'languages', 'interests', 'awards', 'projects', 'volunteer work', 'additional information'}:
+        # Stop when the resume changes to an unmodeled section or when text
+        # extraction jumps into a repeated contact masthead/column.
+        if key in STOP_SECTION_HEADINGS:
+            active = None
+            continue
+        next_line = lines[index+1] if index+1 < len(lines) else ''
+        if active and looks_like_repeated_masthead(line, next_line):
             active = None
             continue
         if active:

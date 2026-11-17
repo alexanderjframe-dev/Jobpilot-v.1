@@ -78,6 +78,16 @@ class StrictEligibilityTests(unittest.TestCase):
         self.assertEqual(self.check(job("IT Help Desk Associate","Plano, TX","onsite",
               "Associate degree preferred. Training for junior technical support.")),"")
 
+    def test_job_titles_are_not_mistaken_for_degrees(self):
+        self.assertEqual(required_education(
+            "Retail associates assist customers and master the point-of-sale system."),0)
+        self.assertEqual(required_education(
+            "An associate cashier role with a friendly team and paid training."),0)
+        self.assertEqual(required_education(
+            "Associate degree in accounting is required for this job."),3)
+        self.assertEqual(self.check(job("Retail Associate","Dallas, TX","onsite",
+            "Associates will support customers and master daily stocking tasks.")),"")
+
     def test_higher_required_education_is_excluded(self):
         self.assertEqual(required_education("Requires a bachelor's degree in a related subject."),4)
         self.assertEqual(required_education("Master's degree is required."),5)

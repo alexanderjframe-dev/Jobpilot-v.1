@@ -32,3 +32,11 @@
 }
 
 .feed-coverage{margin:12px 0 18px;padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--muted);font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+
+.external-search-panel{display:flex;flex-direction:column;gap:12px;margin:16px 0 18px;padding:17px;border-radius:13px;border:1px solid var(--line);background:var(--panel)}
+.external-search-panel h3{margin:5px 0 7px;font-size:15px}
+.external-search-panel p{margin:0;line-height:1.5}
+.external-search-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.external-search-actions input{flex:1 1 220px;width:auto;min-width:0}
+.external-search-actions .btn{min-height:44px}
+@media(max-width:700px){.external-search-actions input{flex-basis:100%;width:100%}.external-search-actions .btn{flex:1 1 auto}}

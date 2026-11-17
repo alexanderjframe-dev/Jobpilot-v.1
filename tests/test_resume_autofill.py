@@ -65,6 +65,22 @@ class ResumeAutofillTests(unittest.TestCase):
         self.assertEqual(text, '')
         self.assertIn('No selectable text', warning)
 
+    def test_headline_is_not_an_applicant_name(self):
+        resume = ("THE BRING\ncontact@example.org\nEducation\n"
+                  "GED | Completed 2025\nALEX FRAME\n"
+                  "SALES / LEADERSHIP / OPERATIONS\n12-HOUR SHIFTS")
+        profile = parse_resume(resume)
+        self.assertNotIn('first_name', profile)
+        self.assertNotIn('last_name', profile)
+        self.assertEqual(profile['education'], 'GED | Completed 2025')
+
+    def test_name_near_contact_is_kept(self):
+        resume = ("THE BRING\nJordan Avery\njordan@example.org\n"
+                  "Education\nGED | Completed 2025")
+        profile = parse_resume(resume)
+        self.assertEqual(profile['first_name'], 'Jordan')
+        self.assertEqual(profile['last_name'], 'Avery')
+
     def test_upload_fills_blanks_but_preserves_edits(self):
         with tempfile.TemporaryDirectory() as directory:
             old = os.environ.get('JOBPILOT_DATA_DIR')

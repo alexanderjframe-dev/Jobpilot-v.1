@@ -61,10 +61,10 @@ MANAGEMENT_RE = re.compile(
  r'principal|team lead|shift lead|crew lead|crew leader|lead associate|'
  r'lead (?:customer|retail|warehouse|technical|it|support|sales|store|service|operations))\b',re.I)
 CREDENTIAL_RE = re.compile(
- r'\b(?:cdl(?:[- ]?[ab])?|commercial driver[’' + "'" + r']s license|'
- r'comp\s?tia\s?(?:a\+|security\+|network\+)|'
- r'professional licen[cs]e|active (?:rn|lpn) license|security clearance|'
- r'forklift certification|pmp certification)\b',re.I)
+ r"\b(?:cdl(?:[- ]?[ab])?|commercial driver['’]s license|"
+ r"comp\s?tia\s?(?:a\+|security\+|network\+)|"
+ r"professional licen[cs]e|active (?:rn|lpn) license|security clearance|"
+ r"forklift certification|pmp certification)(?=$|\W)",re.I)
 MANDATORY_RE = re.compile(r'\b(?:required|must|mandatory|need to have|you need|minimum qualification|valid|active|current)\b',re.I)
 NON_ENGLISH_LANGUAGE_RE = re.compile(
  r'\b(?:spanish|french|german|lao|laotian|mandarin|cantonese|chinese|japanese|'

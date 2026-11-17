@@ -78,6 +78,26 @@ class StrictEligibilityTests(unittest.TestCase):
         self.assertEqual(self.check(job("IT Help Desk Associate","Plano, TX","onsite",
               "Associate degree preferred. Training for junior technical support.")),"")
 
+    def test_required_specialized_certification_is_not_assumed(self):
+        j=job("IT Support Technician", "Dallas, TX", "onsite",
+              "Applicants must have CompTIA A+ certification and customer support skills.")
+        self.assertIn("certification",self.check(j))
+        preferred=job("IT Support Technician","Dallas, TX","onsite",
+              "CompTIA A+ certification preferred; training is provided for new staff.")
+        self.assertEqual(self.check(preferred),"")
+
+    def test_language_qualification_in_description_is_not_assumed(self):
+        j=job("Customer Service Associate", "Dallas, TX", "onsite",
+              "You must be fluent in Lao and English for live customer calls.")
+        self.assertIn("fluency",self.check(j))
+        preferred=job("Customer Service Associate","Dallas, TX","onsite",
+              "Spanish language proficiency preferred, but not required; paid training available.")
+        self.assertEqual(self.check(preferred),"")
+
+    def test_leadership_without_manager_word_is_excluded(self):
+        self.assertIn("leadership",self.check(job("Retail Shift Lead")).lower())
+        self.assertIn("leadership",self.check(job("Lead Customer Support Agent")).lower())
+
     def test_job_titles_are_not_mistaken_for_degrees(self):
         self.assertEqual(required_education(
             "Retail associates assist customers and master the point-of-sale system."),0)

@@ -39,7 +39,20 @@ function renderQueue(){const tabs=['approved','needs_review','applied','intervie
 function sliderValueText(spec,v){return spec.key.startsWith('minimum_hourly')||spec.key==='target_hourly'?`$${v}`:spec.name.includes('(%)')||spec.key.startsWith('weight_')||['match_threshold','auto_queue_threshold','resume_tailoring','cover_letter_length','review_strictness','risk_tolerance'].includes(spec.key)?`${v}%`:spec.key==='refresh_hours'?`${v}h`:String(v);}
 function renderPreferences(){const all=state.boot.sliders;$('#sliderCount').textContent=all.length+' controls';for(const group of ['match','requirements','automation']){$('#sliders-'+group).innerHTML=all.filter(s=>s.group===group).map(s=>`<div class="slider-card"><div class="slider-top"><strong>${escapeHtml(s.name)}</strong><span class="slider-num" id="v-${s.key}">${sliderValueText(s,state.boot.config[s.key])}</span></div><div class="slider-desc">${escapeHtml(s.help)}</div><input type="range" id="slider-${s.key}" data-slider="${s.key}" min="${s.min}" max="${s.max}" step="${s.step}" value="${state.boot.config[s.key]}" aria-label="${escapeHtml(s.name)}"/><div class="slider-scale"><span>${s.min}</span><span>${s.max}</span></div></div>`).join('');}
  $$('[data-config]').forEach(el=>{const v=state.boot.config[el.dataset.config];if(el.type==='checkbox')el.checked=!!v;else el.value=v??'';});}
-function renderProfile(){const p=state.boot.profile;$$('[data-profile]').forEach(el=>el.value=p[el.dataset.profile]??'');$('#resumeName').textContent=p.resume_filename||'No resume uploaded yet';}
+function renderProfile(){
+ const p=state.boot.profile;
+ $('[data-profile]').forEach(el=>el.value=p[el.dataset.profile]??'');
+ $('#resumeName').textContent=p.resume_filename||'No resume uploaded yet';
+ const first=String(p.first_name||'').trim().toLowerCase();
+ const last=String(p.last_name||'').trim().toLowerCase();
+ const suspiciousName=['the','what','my','your','our','this','who'].includes(first)||['bring','resume','experience','career','profile','summary','skills'].includes(last);
+ const suspiciousEducation=/(?:^|\n)[A-Z]{2,}(?:\s+[A-Z]{2,}){1,2}\s*\n[A-Z ]+\s\/\s[A-Z ]+/m.test(String(p.education||''));
+ const warning=$('#profileImportWarning');
+ if(warning){
+   warning.hidden=!(suspiciousName||suspiciousEducation);
+   warning.textContent=(suspiciousName?'Your first or last name looks like a resume headline, not a name. Correct it above and tap Save profile. Re-uploading does not overwrite existing fields. ':'')+(suspiciousEducation?'The Education field may contain text from another part of the resume. Review and correct it before applying.':'');
+ }
+}
 async function renderActivity(){try{const v=await api('/api/activity');$('#activityLog').innerHTML=v.events.length?v.events.map(x=>`<div class="activity-row"><span class="activity-symbol ${escapeHtml(x.level)}">${x.level==='success'?'✓':x.level==='warning'?'!':'↗'}</span><div class="activity-body"><strong>${escapeHtml(x.message)}</strong><small>${fmtDate(x.ts)} · ${new Date(x.ts).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</small></div></div>`).join(''):emptyHTML('Nothing logged yet','Actions such as refreshing listings and approving jobs will be recorded here.');}catch(e){toast(e.message,'error');}}
 function showDrawer(id){state.drawer=id;const j=state.jobs.find(x=>x.id===id);if(!j)return;renderDrawer(j);$('#drawerOverlay').hidden=false;$('#detailsDrawer').classList.add('open');}
 function closeDrawer(){state.drawer=null;$('#drawerOverlay').hidden=true;$('#detailsDrawer').classList.remove('open');}

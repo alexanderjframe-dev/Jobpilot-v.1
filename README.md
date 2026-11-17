@@ -2,6 +2,10 @@
 
 A local-first job discovery, matching and application management app. Built to help you move toward a more stable job rather than rely on gig work alone.
 
+## iPhone and hosted access
+
+Use [IPHONE_SETUP.md](IPHONE_SETUP.md) for the mobile-friendly, password-protected hosting setup. The included `render.yaml` describes a **paid** Render service with a persistent disk. This repository alone is not a live website.
+
 ## Run it
 
 **Requirements:** Python 3.10 or newer, internet access for live job feeds, a modern browser.

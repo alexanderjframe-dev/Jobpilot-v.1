@@ -8,7 +8,7 @@ JobPilot can import Remotive, Jobicy, Remote OK, and configured Greenhouse/Lever
 
 **Start with [ALL_JOBS_SETUP.md](ALL_JOBS_SETUP.md)** for setup and costs/credits, location settings, source coverage, and limits. No job aggregator can guarantee literally every opening or that a listing is still active.
 
-By default, **Discover Jobs hides senior/leadership titles and postings that explicitly list experience beyond the Preferences → Maximum required experience setting**. Users may check **Include senior or high-experience jobs** to see them, labeled as higher-experience roles. Existing saved jobs remain available with a warning. These are conservative keyword-based checks, not automatic verification of your qualifications or the employer's requirements.
+By default, **Discover Jobs hides senior/leadership titles, roles above your preferred experience limit, interpreter/translator or bilingual roles needing language fluency, and roles visibly requiring professional licenses**. Users may check **Include advanced or specialized jobs** to reveal them. Existing saved jobs remain available, clearly labeled with a qualification warning. These checks are conservative title/description heuristics, not a determination that you're unqualified; JobPilot does not yet verify language fluency or certifications from a resume. Regular entry-level roles remain available.
 
 ## iPhone and hosted access
 

@@ -13,6 +13,7 @@ from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.responses import HTMLResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from mobile_security import install_security, hosted_mode
 
 ROOT = Path(__file__).resolve().parent
 DATA = Path(os.environ.get('JOBPILOT_DATA_DIR', str(ROOT / 'data'))).resolve()
@@ -293,7 +294,8 @@ def recalculate():
    score,reasons,metrics=score_job(dict(job),cfg,profile)
    c.execute('UPDATE jobs SET score=?,reasons=?,metrics=? WHERE id=?',(score,json.dumps(reasons),json.dumps(metrics),job['id']))
 
-app=FastAPI(title='JobPilot',version='1.0.0')
+app=FastAPI(title='JobPilot',version='1.1.0')
+install_security(app)
 app.mount('/static',StaticFiles(directory=ROOT/'static'),name='static')
 initialize()
 scan_lock=asyncio.Lock()
@@ -313,6 +315,9 @@ class StatusChange(BaseModel):
  status:str
  notes:str|None=None
 
+@app.get('/healthz')
+async def healthz():return {'status':'ok'}
+
 @app.get('/',response_class=HTMLResponse)
 async def index():return (ROOT/'static'/'index.html').read_text(encoding='utf-8')
 @app.get('/api/bootstrap')
@@ -320,7 +325,7 @@ async def bootstrap():
  with db() as c:
   counts={r['status']:r['n'] for r in c.execute('SELECT status,COUNT(*) AS n FROM jobs GROUP BY status')}
   stats={'total':sum(counts.values()),'strong':c.execute('SELECT COUNT(*) AS n FROM jobs WHERE score>=? AND sample=0',(get_kv('config')['match_threshold'],)).fetchone()['n'], 'approved':counts.get('approved',0),'applied':counts.get('applied',0),'sample':c.execute('SELECT COUNT(*) n FROM jobs WHERE sample=1').fetchone()['n']}
- return {'config':get_kv('config'),'profile':get_kv('profile'),'sliders':[dict(zip(['key','name','default','min','max','step','group','help'],s)) for s in SLIDERS],'stats':stats,'last_scan':get_kv('last_scan')}
+ return {'hosted':hosted_mode(),'config':get_kv('config'),'profile':get_kv('profile'),'sliders':[dict(zip(['key','name','default','min','max','step','group','help'],s)) for s in SLIDERS],'stats':stats,'last_scan':get_kv('last_scan')}
 
 @app.put('/api/config')
 async def save_config(payload:JsonObject):
@@ -432,6 +437,9 @@ async def apply_job(job_id:str):
   if not r:raise HTTPException(404,'Job not found')
   if r['sample']:raise HTTPException(400,'Cannot apply to demo listings')
   if r['status']!='approved':raise HTTPException(400,'Approve this specific job first')
+  if hosted_mode():
+   return {'ok':True,'manual':True,'url':safe_url(r['url']),
+           'message':'Open the employer application in Safari. No application has been submitted.'}
   p=get_kv('profile'); required=['first_name','last_name','email']
   missing=[k for k in required if not p.get(k)]
   if missing:raise HTTPException(400,'Complete your applicant profile first: '+', '.join(missing))

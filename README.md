@@ -34,6 +34,16 @@ python -m playwright install chromium
 
 The app runs **only on your computer**. It won't continue scanning or applying after your computer or local server shuts down. Scheduled refreshes are opt-in, and the default interval is 12 hours.
 
+## Resume-to-profile autofill
+
+When you upload a PDF, DOCX, or TXT resume from Applicant Profile, JobPilot reads the text **on its server** and fills profile fields that are currently blank: name, email, phone, location, LinkedIn/portfolio links, summary, work history, education, and skills when clearly present.
+
+- Your existing profile entries are **not overwritten**. You can review and edit every imported field.
+- JobPilot never guesses work authorization or visa sponsorship answers.
+- Some resume formatting and scanned/image-only PDFs cannot be read automatically; export a text-based PDF or DOCX instead.
+- The parser is rule-based and may misread unusual layouts. Check the imported information before using it in a real application.
+- No external AI parsing service is used; resumes stay with JobPilot's configured storage. A free Render web service may erase uploaded files and saved profiles when restarted or redeployed.
+
 ## First-time setup
 
 1. **Applicant profile:** Add your accurate contact details, work history and skills, then upload a real resume (PDF/DOCX/TXT, 5 MB maximum).

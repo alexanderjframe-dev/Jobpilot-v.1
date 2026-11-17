@@ -120,9 +120,9 @@ class StrictEligibilityTests(unittest.TestCase):
 
     def test_wrong_job_categories_are_excluded(self):
         self.assertIn("target roles",self.check(job("Graphic Designer")))
-        self.assertIn("target roles",self.check(job("Cloud Solutions Architect")))
+        self.assertIn("Specialized",self.check(job("Cloud Solutions Architect")))
         self.assertIn("target roles",self.check(job("Territory Representative")))
-        self.assertIn("target roles",self.check(job("Research Scientist")))
+        self.assertIn("Specialized",self.check(job("Research Scientist")))
 
     def test_manager_and_licensed_specialists_blocked(self):
         self.assertIn("Management",self.check(job("Territory Manager")))
@@ -146,10 +146,10 @@ class StrictEligibilityTests(unittest.TestCase):
         }))
 
     def test_engineer_role_is_not_a_regular_team_member_match(self):
-        self.assertIn("target roles",self.check(job(
+        self.assertIn("Specialized",self.check(job(
             "Software Engineer - Team Member",desc=
             "Work with team members and write full-stack production software.")))
-        self.assertIn("target roles",self.check(job(
+        self.assertIn("Specialized",self.check(job(
             "Sales Engineer, Customer Support",desc=
             "Provide customer support and solution architecture for enterprise customers.")))
 

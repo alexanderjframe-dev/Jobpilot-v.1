@@ -15,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from resume_parser import extract_resume_text, parse_resume
 from mobile_security import install_security, hosted_mode
+from extra_job_sources import discover_more
 
 ROOT = Path(__file__).resolve().parent
 DATA = Path(os.environ.get('JOBPILOT_DATA_DIR', str(ROOT / 'data'))).resolve()
@@ -63,6 +64,8 @@ DEFAULTS.update({
  'work_type':'any', 'schedule':'either', 'greenhouse_boards':'', 'lever_sites':'',
  'scan_enabled':False, 'auto_queue_enabled':False, 'auto_submit_enabled':False,
  'remote_feed_enabled':True, 'sample_mode':False,
+ 'jobicy_enabled':True, 'remoteok_enabled':True,
+ 'adzuna_enabled':True, 'jsearch_enabled':True, 'usajobs_enabled':True,
 })
 PROFILE_DEFAULTS = { 'first_name':'', 'last_name':'', 'email':'', 'phone':'', 'city':'', 'state':'',
  'linkedin':'','portfolio':'', 'work_authorized':'', 'sponsorship':'', 'summary':'',
@@ -272,6 +275,7 @@ async def fetch_jobs():
      out.append({'source':'Lever / '+token,'source_id':x.get('id'),'title':title,'company':token.replace('-',' ').title(),'location':loc,'work_mode':classify_mode(title,loc,desc),'employment_type':cats.get('commitment') or '', 'description':desc,'url':x.get('hostedUrl') or x.get('applyUrl'),'salary':'','posted_at':normalized_date((x.get('createdAt') or 0)/1000)})
     return out
    await grab('Lever: '+token,'https://api.lever.co/v0/postings/'+token+'?mode=json',lev)
+  await discover_more(client, cfg, items, counts, errors)
  if not items and not errors:errors.append('No sources enabled. Enable Remotive or add an employer board token.')
  result=upsert_jobs(items)
  set_kv('last_scan',{'at':now(),'counts':counts,'errors':errors,**result})

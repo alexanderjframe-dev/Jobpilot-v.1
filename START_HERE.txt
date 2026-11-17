@@ -1,0 +1,22 @@
+JOBPILOT — FIRST LAUNCH
+
+1) Unzip the folder.
+2) Windows: double-click run.bat
+   Mac or Linux: open Terminal here and enter ./run.sh
+3) Open http://127.0.0.1:8765 in your web browser.
+4) Fill in Applicant profile (name, email, resume).
+5) Adjust all 27 sliders under Preferences and save.
+6) Click Find jobs. The default feed is REMOTE ONLY; for LOCAL jobs,
+   connect employers' Greenhouse/Lever job board tokens or add job URLs.
+7) Save and approve a job before clicking Apply assist.
+
+AUTOMATIC FORM FILL (optional):
+  Windows: .venv\Scripts\activate.bat
+  Mac/Linux: . .venv/bin/activate
+  Then: python -m playwright install chromium
+
+NO BACKGROUND WORK IN CHAT: The scheduler runs only while this local
+application is active on your computer. It doesn't submit to arbitrary
+job sites and it won't bypass human verification steps.
+
+Full instructions: README.md

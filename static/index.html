@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="theme-color" content="#090e1d"/><title>JobPilot — Your next move</title>
+<link rel="stylesheet" href="/static/styles.css"/>
+</head>
+<body>
+<div id="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><div class="brand-mark"><span>✦</span></div><div><strong>jobpilot<span class="brand-dot">.</span></strong><small>YOUR CAREER OS</small></div></div>
+    <div class="nav-label">WORKSPACE</div>
+    <nav class="nav" aria-label="Main navigation">
+      <button class="nav-link active" data-page="dashboard"><span class="nav-ico">◫</span> Overview</button>
+      <button class="nav-link" data-page="discover"><span class="nav-ico">⌕</span> Discover jobs <span id="navJobs" class="nav-num">0</span></button>
+      <button class="nav-link" data-page="queue"><span class="nav-ico">▤</span> Application queue <span id="navQueue" class="nav-num">0</span></button>
+      <button class="nav-link" data-page="activity"><span class="nav-ico">◷</span> Activity log</button>
+    </nav>
+    <div class="nav-label with-gap">YOUR SETUP</div>
+    <nav class="nav">
+      <button class="nav-link" data-page="preferences"><span class="nav-ico">⚑</span> Preferences</button>
+      <button class="nav-link" data-page="profile"><span class="nav-ico">♙</span> Applicant profile</button>
+    </nav>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-help"><div class="sidebar-help-icon">✳</div><strong>Build steady momentum.</strong><span>Build consistent income and keep your options open.</span><button class="btn secondary small" data-action="open-plan">View your next steps →</button></div>
+    <div class="sidebar-footer"><span class="status-dot"></span> Local & private <span class="version">v1.0</span></div>
+  </aside>
+  <div class="main-wrap">
+    <header class="topbar"><div class="mobile-brand">✦ jobpilot.</div><button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">☰</button>
+      <div class="crumb"><span class="crumb-muted">Workspace</span><span> / </span><strong id="breadcrumb">Overview</strong></div>
+      <div class="top-actions"><span id="lastScan" class="last-scan">Not scanned yet</span><button class="btn ghost" data-action="export-csv" title="Download application history">↓ Export</button><button class="btn primary" data-action="refresh" id="refreshBtn"><span id="refreshIcon">↻</span> Find jobs</button></div>
+    </header>
+    <main class="content">
+      <section class="page active" id="page-dashboard">
+        <div class="page-heading"><div><div class="eyebrow">YOUR COMMAND CENTER <span class="live-pill">● LOCAL WORKSPACE</span></div><h1>Own your next move<span class="headline-period">.</span></h1><p>Find better opportunities, stay organized, and build toward your independence.</p></div><button class="btn secondary" data-page="preferences">⚙ Customize preferences</button></div>
+        <div class="stats-row">
+          <div class="stat"><div class="stat-top"><span>Jobs discovered</span><span class="stat-glyph">⌕</span></div><b id="statTotal">—</b><div class="stat-bottom">Across your connected sources</div></div>
+          <div class="stat"><div class="stat-top"><span>Strong matches</span><span class="stat-glyph purple">✧</span></div><b id="statStrong">—</b><div class="stat-bottom"><span class="positive">↑</span> Above your match threshold</div></div>
+          <div class="stat"><div class="stat-top"><span>Approved queue</span><span class="stat-glyph blue">▤</span></div><b id="statApproved">—</b><div class="stat-bottom">Ready for application assistance</div></div>
+          <div class="stat"><div class="stat-top"><span>Applications sent</span><span class="stat-glyph green">↗</span></div><b id="statApplied">—</b><div class="stat-bottom">Verified or manually confirmed</div></div>
+        </div>
+        <div class="dashboard-grid">
+          <section class="hero-panel"><div class="hero-content"><div class="hero-tag">✦ THE FOUNDATION FRAMEWORK</div><h2>Build stability.<br/><em>Unlock freedom.</em></h2><p>One stable job can change what you get to choose next. Your job search, organized from first listing to first paycheck.</p><div class="hero-buttons"><button class="btn white" data-page="discover">Explore matches <span>↗</span></button><button class="hero-text-button" data-page="profile">Complete your profile →</button></div></div><div class="hero-art" aria-hidden="true"><div class="orbit orbit-1"></div><div class="orbit orbit-2"></div><div class="orbit orbit-3"></div><div class="planet">✦</div><div class="spark s1">✧</div><div class="spark s2">✦</div><div class="spark s3">✳</div></div></section>
+          <section class="steps-panel"><div class="section-head"><div><span class="section-overline">GET STARTED</span><h3>Your launch checklist</h3></div><span class="subtle">4 milestones</span></div><div id="checklist" class="checklist"></div></section>
+        </div>
+        <div class="section-head lower"><div><span class="section-overline">RECOMMENDED FOR YOU</span><h3>Top job matches</h3></div><button class="text-button" data-page="discover">View all jobs ↗</button></div>
+        <div id="topJobs" class="job-list compact-jobs"></div>
+        <div class="dashboard-bottom"><div class="tip"><span>ⓘ</span><div><strong>Designed for your actual situation</strong><p>Your scores are recommendations, not guarantees. Unknown salary, commute, and required qualifications should always be verified before applying.</p></div></div><div class="feed-attribution">Remote feed via <a href="https://remotive.com" target="_blank" rel="noreferrer">Remotive</a> · Employer boards via Greenhouse & Lever</div></div>
+      </section>
+
+      <section class="page" id="page-discover">
+        <div class="page-heading"><div><div class="eyebrow">OPPORTUNITY RADAR</div><h1>Discover <span class="gradient-word">opportunities.</span></h1><p>Real listings from public feeds and employer career boards, ranked for you.</p></div><button class="btn secondary" data-action="add-job">＋ Add job manually</button></div>
+        <div class="filter-panel"><div class="search-wrap"><span>⌕</span><input id="jobSearch" placeholder="Search title, company, skills or location…" autocomplete="off" /></div><label>STATUS<select id="statusFilter"><option value="">All statuses</option><option value="discovered">Discovered</option><option value="saved">Saved</option><option value="approved">Approved</option><option value="needs_review">Needs review</option><option value="applied">Applied</option><option value="interview">Interview</option><option value="offer">Offer</option><option value="skipped">Skipped</option></select></label><label>SORT<select id="sortJobs"><option value="score">Best match</option><option value="recent">Newest</option><option value="pay">Highest disclosed pay</option><option value="company">Company A–Z</option></select></label></div>
+        <div class="result-bar"><div><strong id="resultsLabel">0 opportunities</strong><span class="subtle" id="resultsNote"> · ranked by fit</span></div><div class="inline-slider"><span>Min score</span><input id="minScore" type="range" min="0" max="100" step="5" value="0"/><b id="minScoreValue">0</b></div></div>
+        <div id="discoverJobs" class="job-list"></div>
+        <div class="bottom-action"><button class="btn ghost" data-action="load-demo">✧ Load fictional examples</button><button class="btn ghost" data-action="clear-demo">✕ Clear fictional examples</button></div>
+      </section>
+
+      <section class="page" id="page-queue">
+        <div class="page-heading"><div><div class="eyebrow">YOUR PIPELINE</div><h1>Application <span class="gradient-word">queue.</span></h1><p>Review each job, approve it, then launch application assistance.</p></div><button class="btn secondary" data-page="profile">♙ Check profile</button></div>
+        <div class="notice"><span class="notice-symbol">⌁</span><div><strong>You're always in control.</strong><p>Job discovery and scoring can happen automatically. Sending applications requires you to approve each job first. On supported employer forms, the assistant can prefill your details; auto-submit is optional and disabled by default.</p></div></div>
+        <div class="queue-tabs"><button class="qtab active" data-qtab="approved">Approved <span id="approvedTabNum">0</span></button><button class="qtab" data-qtab="needs_review">Needs review</button><button class="qtab" data-qtab="applied">Applied</button><button class="qtab" data-qtab="interview">Interviews</button><button class="qtab" data-qtab="saved">Saved</button></div>
+        <div id="queueJobs" class="job-list"></div>
+        <div class="queue-footer"><span>Application assistance launches a visible browser on this computer. It does not run in the cloud.</span><a href="https://playwright.dev/python/docs/browsers" target="_blank" rel="noreferrer">Browser setup ↗</a></div>
+      </section>
+
+      <section class="page" id="page-preferences">
+        <div class="page-heading"><div><div class="eyebrow">TUNE YOUR SEARCH</div><h1>Your rules. <span class="gradient-word">Your priorities.</span></h1><p>Fine-tune every factor. All ranking changes update immediately when saved.</p></div><button class="btn primary" id="savePrefsTop" data-action="save-preferences">✓ Save preferences</button></div>
+        <div class="settings-intro"><div class="settings-icon">⚑</div><div><strong>Make the algorithm work for you.</strong><span>Each slider changes how opportunities are scored or managed. Some future-facing preferences are saved but aren't active yet; those are explicitly labeled.</span></div><b id="sliderCount">0 controls</b></div>
+        <div class="settings-grid"><div class="settings-main"><div class="pref-section"><div class="section-head"><div><span class="section-overline">01 / PERSONALIZED RANKING</span><h3>Match scoring weights</h3></div><span class="subtle">Higher = more influence</span></div><div class="slider-grid" id="sliders-match"></div></div>
+        <div class="pref-section"><div class="section-head"><div><span class="section-overline">02 / YOUR NON-NEGOTIABLES</span><h3>Pay, schedule & location</h3></div></div><div class="slider-grid" id="sliders-requirements"></div></div>
+        <div class="pref-section"><div class="section-head"><div><span class="section-overline">03 / AUTOMATION CONTROLS</span><h3>Review, volume & cadence</h3></div></div><div class="slider-grid" id="sliders-automation"></div></div></div>
+        <aside class="settings-side"><div class="side-panel"><span class="section-overline">SEARCH FOUNDATION</span><h3>Where & what</h3><label>Primary search city<input id="cfg-location" data-config="location" placeholder="Austin, TX"/></label><label>Nearby cities (separate with ;)<textarea id="cfg-location_aliases" data-config="location_aliases" rows="2"></textarea></label><label>Target roles (comma-separated)<textarea id="cfg-target_titles" data-config="target_titles" rows="3"></textarea></label><label>Skills & strengths<textarea id="cfg-skills" data-config="skills" rows="3"></textarea></label><label>Must-have keywords<input id="cfg-must_have_keywords" data-config="must_have_keywords"/></label><label>Avoid keywords<textarea id="cfg-avoid_keywords" data-config="avoid_keywords" rows="3"></textarea></label><label>Work type<select id="cfg-work_type" data-config="work_type"><option value="any">Any</option><option value="onsite">Prefer on-site</option><option value="remote">Remote only</option></select></label><label>Schedule<select id="cfg-schedule" data-config="schedule"><option value="either">Either</option><option value="full">Full-time</option><option value="part">Part-time</option></select></label></div>
+        <div class="side-panel"><span class="section-overline">LIVE SOURCES</span><h3>Employer boards</h3><p class="subtle">For Greenhouse and Lever, add an employer's public board token, not their full URL.</p><label>Greenhouse board tokens<textarea id="cfg-greenhouse_boards" data-config="greenhouse_boards" rows="3" placeholder="example-company; another-company"></textarea></label><label>Lever site tokens<textarea id="cfg-lever_sites" data-config="lever_sites" rows="3" placeholder="example-company"></textarea></label><div class="switch-row"><div><strong>Remotive remote jobs</strong><small>Public job feed</small></div><input id="cfg-remote_feed_enabled" type="checkbox" data-config="remote_feed_enabled" /></div></div>
+        <div class="side-panel"><span class="section-overline">AUTOPILOT</span><h3>Background behavior</h3><div class="switch-row"><div><strong>Scheduled feed scans</strong><small>Works only while this server runs</small></div><input id="cfg-scan_enabled" type="checkbox" data-config="scan_enabled" /></div><div class="switch-row"><div><strong>Save excellent matches</strong><small>No applications sent</small></div><input id="cfg-auto_queue_enabled" type="checkbox" data-config="auto_queue_enabled" /></div><div class="switch-row caution"><div><strong>Attempt auto-submit</strong><small>Only after each job is approved; never bypasses custom questions, verification or CAPTCHAs</small></div><input id="cfg-auto_submit_enabled" type="checkbox" data-config="auto_submit_enabled" /></div><button class="btn primary wide" data-action="save-preferences">Save all preferences</button></div></aside></div>
+      </section>
+
+      <section class="page" id="page-profile">
+        <div class="page-heading"><div><div class="eyebrow">PRIVATE BY DEFAULT</div><h1>Your applicant <span class="gradient-word">profile.</span></h1><p>Used to prefill forms for jobs you've approved. Stored locally on your computer.</p></div><button class="btn primary" data-action="save-profile">✓ Save profile</button></div>
+        <div class="profile-grid"><div class="profile-card"><div class="section-head"><div><span class="section-overline">THE BASICS</span><h3>Contact details</h3></div><div class="lock-pill">♧ On this device</div></div><div class="form-grid"><label>First name <span>*</span><input data-profile="first_name" autocomplete="given-name"/></label><label>Last name <span>*</span><input data-profile="last_name" autocomplete="family-name"/></label><label>Email <span>*</span><input data-profile="email" type="email" autocomplete="email"/></label><label>Phone<input data-profile="phone" autocomplete="tel"/></label><label>City<input data-profile="city"/></label><label>State<input data-profile="state"/></label><label>LinkedIn URL<input data-profile="linkedin" placeholder="https://linkedin.com/in/..."/></label><label>Portfolio URL<input data-profile="portfolio" placeholder="https://..."/></label><label>Authorized to work? (fill truthfully)<select data-profile="work_authorized"><option value="">Not set</option><option value="yes">Yes</option><option value="no">No</option></select></label><label>Need visa sponsorship? (fill truthfully)<select data-profile="sponsorship"><option value="">Not set</option><option value="yes">Yes</option><option value="no">No</option></select></label></div></div>
+        <div class="profile-card"><div class="section-head"><div><span class="section-overline">YOUR STORY</span><h3>Experience & resume</h3></div></div><label>Professional summary<textarea data-profile="summary" rows="4" placeholder="A few honest sentences about your strengths…"></textarea></label><label>Work experience<textarea data-profile="experience" rows="5" placeholder="Jobs you've held, tasks, achievements…"></textarea></label><label>Education<textarea data-profile="education" rows="3" placeholder="Schooling or certifications (if applicable)…"></textarea></label><label>Skills (comma-separated)<textarea data-profile="skills" rows="3" placeholder="Customer service, Excel, problem solving…"></textarea></label><div class="resume-upload"><div class="upload-icon">▣</div><div><strong id="resumeName">No resume uploaded yet</strong><small>PDF, DOCX or TXT, up to 5 MB. Stored locally, never posted until you approve an application.</small></div><label class="btn secondary file-button">Upload resume<input id="resumeFile" type="file" accept=".pdf,.docx,.txt" hidden/></label></div></div></div>
+        <div class="privacy-note">✧ Profile data stays in this local app's <code>data/</code> folder. Never share this folder or commit it to a public repository.</div>
+      </section>
+
+      <section class="page" id="page-activity"><div class="page-heading"><div><div class="eyebrow">TRANSPARENT AUTOMATION</div><h1>Activity <span class="gradient-word">log.</span></h1><p>A record of what the system actually did — no invented application confirmations.</p></div><button class="btn secondary" data-action="export-json">↓ Backup data</button></div><div class="activity-card" id="activityLog"></div></section>
+    </main>
+  </div>
+</div>
+<div class="overlay" id="drawerOverlay" hidden></div>
+<aside class="details-drawer" id="detailsDrawer" aria-label="Job details"><div id="drawerContent"></div></aside>
+<div class="overlay" id="modalOverlay" hidden></div><div class="modal" id="modal" role="dialog" aria-modal="true" hidden></div>
+<div class="toast-area" id="toastArea" aria-live="polite"></div>
+<script src="/static/app.js"></script>
+</body></html>

@@ -1,0 +1,14 @@
+# Local user data (resumes, applicant PII, tokens, history)
+data/
+.env
+.env.*
+!.env.example
+*.sqlite3
+*.db
+*.pem
+*.key
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store

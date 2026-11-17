@@ -13,6 +13,7 @@ from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.responses import HTMLResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from resume_parser import extract_resume_text, parse_resume
 from mobile_security import install_security, hosted_mode
 
 ROOT = Path(__file__).resolve().parent
@@ -362,9 +363,20 @@ async def upload_resume(file:UploadFile=File(...)):
  if suffix=='.pdf' and not raw.startswith(b'%PDF'):raise HTTPException(400,'Invalid PDF')
  if suffix=='.docx' and not raw.startswith(b'PK'):raise HTTPException(400,'Invalid DOCX')
  path=DATA/('resume'+suffix);path.write_bytes(raw)
- p=get_kv('profile');p['resume_filename']=Path(file.filename or 'resume').name[:120];p['resume_path']=str(path);set_kv('profile',p)
- log('Resume uploaded locally')
- return {'ok':True,'filename':p['resume_filename']}
+ text,warning=extract_resume_text(raw,suffix)
+ extracted=parse_resume(text)
+ p=get_kv('profile')
+ filled=[]
+ for key,value in extracted.items():
+  if key in PROFILE_DEFAULTS and key not in ('resume_path','resume_filename','work_authorized','sponsorship') and not str(p.get(key,'')).strip():
+   p[key]=value[:5000]
+   filled.append(key)
+ p['resume_filename']=Path(file.filename or 'resume').name[:120]
+ p['resume_path']=str(path)
+ set_kv('profile',p)
+ if filled:recalculate()
+ log('Resume uploaded; ' + str(len(filled)) + ' blank profile fields auto-filled')
+ return {'ok':True,'filename':p['resume_filename'],'autofill':{'filled':filled,'found':list(extracted.keys()),'warning':warning or ('No recognizable applicant details found in this resume.' if not extracted else '')}}
 
 @app.get('/api/jobs')
 async def list_jobs(query:str='',status:str='',min_score:int=0,sort:str='score',include_samples:bool=True,limit:int=500):

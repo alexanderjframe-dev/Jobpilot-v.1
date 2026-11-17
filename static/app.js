@@ -51,7 +51,9 @@ function renderFeedCoverage(){
    .filter(([id])=>state.boot.config?.[id+'_enabled']!==false&&!keys[id])
    .map(([,name])=>name);
  const keyNotice=notConnected.length?' Extra local aggregators not connected: '+notConnected.join(', ')+'. Add their API keys privately in Render to import their jobs.':'';
- const caveat=' Remotive, Jobicy and Remote OK focus on remote roles; employer boards need tokens. Local job imports require configured aggregators. Search buttons above open external boards without importing listings.'+keyNotice;
+ const localEnabled=state.boot.config?.veritahire_enabled!==false;
+ const localNote=localEnabled?' VeritaHire local uses a no-key employer-site search in your confirmed city; 30-minute caching prevents repeated free API requests.':' The no-key local employer feed is disabled in Preferences.';
+ const caveat=' Remotive, Jobicy and Remote OK focus on remote roles; employer boards need tokens.'+localNote+' External job-board searches open those websites, not imported listings.'+keyNotice;
  const issues=problems.length?' Feed errors: '+problems.join('; ')+'.':'';
  const demo=samples?' '+samples+' FICTIONAL DEMO listings are also stored; they are not real jobs.':'';
  box.textContent=info+caveat+issues+demo+' Open each employer listing to confirm it is still accepting applications.';
@@ -80,7 +82,7 @@ function renderDiscover(){
  if(!state.showAdvanced&&state.hiddenAdvanced)$('#resultsNote').textContent+=' · '+state.hiddenAdvanced+' out-of-scope jobs hidden';
  $('#discoverJobs').innerHTML=list.length?list.map(jobHTML).join(''):
    emptyHTML('No imported matches right now',
-     'This does not mean you are unqualified for work. Confirm your education and city, set Min score to 0, and try the local Indeed searches above. Free built-in feeds mainly cover remote jobs.',
+     'This does not mean you are unqualified for work. Confirm your education and search city, enable Live local employer jobs, tap Find jobs and check source errors above. Use the local Indeed searches above for additional options.',
      'Refresh listings','refresh');
  const hint=$('#zeroResultsHint');
  if(hint){
@@ -91,13 +93,17 @@ function renderDiscover(){
      if(n.setup)details.push(n.setup+' listings need setup confirmation');
      if(n.location)details.push(n.location+' have a location mismatch or unverified remote eligibility');
      if(n.qualifications_or_role)details.push(n.qualifications_or_role+' are outside selected job types or requirements');
-     const keys=state.boot?.provider_keys||{};
-     const haveLocal=keys.adzuna||keys.jsearch;
-     hint.textContent='Zero matches is about the imported feed and your filters, NOT your ability to work. '+
-       (details.length?'From the imported listings: '+details.join('; ')+'. ':'')+
-       (haveLocal?'Check feed errors above for your local aggregator. ':
-       'Local retail, restaurant and warehouse openings usually need a local aggregator; the free feeds mostly list remote jobs. ')+
-       'The local Indeed shortcuts above open more openings in your confirmed city; you can track good listings using Add job manually.';
+     const scan=state.boot?.last_scan||{};
+     const local=Object.entries(scan.counts||{}).find(([name])=>name.startsWith('VeritaHire local'));
+     let localStatus='';
+     if(!state.boot?.config?.location_confirmed)localStatus='Your search city has not been confirmed. ';
+     else if(!state.boot?.config?.veritahire_enabled)localStatus='Enable Live local employer jobs in Preferences. ';
+     else if(!scan.at)localStatus='Tap Find jobs to run the local employer search. ';
+     else if(local)localStatus='Local source reported '+Number(local[1]||0)+' imported matches before filters. ';
+     else localStatus='The last scan did not report local results; inspect feed errors above. ';
+     hint.textContent='Zero matches in JobPilot is NOT a judgment about your qualifications. '+localStatus+
+       (details.length?'Listings excluded: '+details.join('; ')+'. ':'')+
+       'You can also search Indeed in your confirmed city using the shortcuts above, then Add job manually to track openings.';
    }
  }
 }
@@ -149,7 +155,7 @@ function externalSearch(provider,searchTerm=null){
  }
  if(url)window.open(url,'_blank','noopener,noreferrer');
 }
-async function refresh(){if(state.busy)return;state.busy=true;$('#refreshBtn').disabled=true;$('#refreshBtn').textContent='↻ Scanning…';try{const result=await api('/api/refresh',{method:'POST'});await load();toast(`${result.new} new jobs found; ${result.processed} listings checked${result.errors?.length?'. Some feeds failed — see Activity.':''}`,result.errors?.length?'':'success');}catch(e){toast(e.message,'error');}finally{state.busy=false;$('#refreshBtn').disabled=false;$('#refreshBtn').innerHTML='<span>↻</span> Find jobs';}}
+async function refresh(){if(state.busy)return;state.busy=true;$('#refreshBtn').disabled=true;$('#refreshBtn').textContent='↻ Scanning…';try{const result=await api('/api/refresh',{method:'POST'});await load();const eligible=state.jobs.filter(j=>!j.sample&&!j.advanced).length;toast(eligible?eligible+' potential matches in your current job list; '+result.new+' newly imported.': 'No matches in the imported feed yet. Check the local source status on Discover and use the Indeed shortcuts.',eligible?'success':'');}catch(e){toast(e.message,'error');}finally{state.busy=false;$('#refreshBtn').disabled=false;$('#refreshBtn').innerHTML='<span>↻</span> Find jobs';}}
 async function savePreferences(){const values={};$$('[data-config]').forEach(el=>values[el.dataset.config]=el.type==='checkbox'?el.checked:el.value);$$('[data-slider]').forEach(el=>values[el.dataset.slider]=Number(el.value));await api('/api/config',jsonOpts('PUT',{values}));await load();toast('Preferences saved. All job scores recalculated.','success');}
 async function saveProfile(){const values={};$$('[data-profile]').forEach(el=>values[el.dataset.profile]=el.value);await api('/api/profile',jsonOpts('PUT',{values}));await load();toast(state.boot.hosted?'Applicant profile saved to your protected server.':'Applicant profile saved locally.','success');}
 async function uploadResume(file){

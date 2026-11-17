@@ -166,9 +166,9 @@ EXP_YEARS_RE = re.compile(r'\b(\d{1,2})\s*(?:\+|plus\b|[-–]\s*\d{1,2})?\s*(?:y
 ENTERPRISE_ROLE_RE = re.compile(r'\b(?:sales engineer|solutions? engineer|account executive|sales executive|customer success manager|technical account manager|solutions? architect|sales manager|account manager)\b',re.I)
 # Roles with essential language proficiency or professional licenses should not
 # appear as ordinary matches without a way to verify those qualifications.
-LANGUAGE_ROLE_RE = re.compile(r'\\b(?:interpreters?|translators?|linguists?)\\b',re.I)
-MULTILINGUAL_ROLE_RE = re.compile(r'\\b(?:bilingual|multilingual|tri\\s?lingual)\\b',re.I)
-LICENSED_ROLE_RE = re.compile(r'\\b(?:registered nurse|licensed practical nurse|physician|attorney|lawyer|dentist|pharmacist|commercial pilot|airline pilot|certified public accountant|cdl(?:[ -]?[ab])?|licensed\\s+\\w+(?:\\s+\\w+)?)\\b',re.I)
+LANGUAGE_ROLE_RE = re.compile(r'\b(?:interpreters?|translators?|linguists?)\b',re.I)
+MULTILINGUAL_ROLE_RE = re.compile(r'\b(?:bilingual|multilingual|tri\s?lingual)\b',re.I)
+LICENSED_ROLE_RE = re.compile(r'\b(?:registered nurse|licensed practical nurse|physician|attorney|lawyer|dentist|pharmacist|commercial pilot|airline pilot|certified public accountant|cdl(?:[ -]?[ab])?|licensed\s+\w+(?:\s+\w+)?)\b',re.I)
 
 def qualification_note(job,cfg):
  """Conservative title/required-years warning; not a verified eligibility ruling."""

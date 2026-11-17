@@ -17,6 +17,16 @@ JobPilot now **requires explicit education and location confirmation before show
 3. In **Discover Jobs**, tap **Find jobs**. The normal results and dashboard display only roles that meet the chosen search area, selected title families, confirmed education level, and basic experience/qualification rules. Remote roles must explicitly establish U.S. or state eligibility. Unknown locations and sparse job descriptions are excluded.
 4. **Show excluded jobs (review only)** is optional and off by default. It is not an eligibility override for automatic queueing. Existing saved jobs remain available for manual review with a warning.
 
+## Everyday jobs when the strict filter returns zero
+
+**Include regular entry-level jobs** is now enabled by default in **Preferences → Where & what**. This broadens normal recommendations to ordinary cashier, grocery, warehouse, stocker, crew, food-service, housekeeping, production, clerk, and similar roles even if the title is not in your specific Target roles list. Education, city/state, seniority, licensed work, and required language qualifications are **still checked**. Turn this option off to restore target-title-only results.
+
+**Short descriptions are no longer automatic rejections.** An otherwise plausible regular job will appear with a **VERIFY DETAILS** warning if the feed omits requirements. You must open the employer site to confirm its actual education, work eligibility, experience and other requirements. These are *possible-fit listings*, not a guarantee of eligibility.
+
+**No imported matches does not mean you are unqualified.** The built-in free Remotive, Jobicy, and Remote OK feeds primarily supply remote jobs. JobPilot cannot populate a broad local warehouse/retail/restaurant database without a configured local job aggregator (see [ALL_JOBS_SETUP.md](ALL_JOBS_SETUP.md)). For a free workaround, Discover includes direct Indeed searches for **Entry-level, Cashier, Warehouse, and Crew member**, using the search city you explicitly confirmed in Preferences. Those searches open the real job board and are not automatically imported. Use **Add job manually** to track a listing you verify.
+
+The app also shows a breakdown of excluded imported results by incomplete setup, location, and requirements so that zero results is not confused with being ineligible for work.
+
 A listing without a stated degree requirement is not automatically a claim that none exists; unknown qualifications cannot be guaranteed. The app intentionally rejects uncertain location/education fits when data is insufficient, so the result count can be much smaller or even zero. Every employer's original posting must still be checked. Live job providers may have stale, misleading, or incomplete descriptions.
 
 

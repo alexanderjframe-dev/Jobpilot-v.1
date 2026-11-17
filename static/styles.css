@@ -46,3 +46,13 @@
 .experience-filter input{width:17px;height:17px;accent-color:#8c78e8}
 .experience-filter small{color:var(--muted);line-height:1.4}
 .job-experience-warning{border:1px solid #ae8356;border-radius:9px;padding:12px 14px;color:#e7ba86;background:rgba(184,122,57,.1);line-height:1.5;font-size:13px}
+
+/* Strict eligibility setup: clear, accessible confirmation on mobile. */
+.strict-setup-notice{border:1px solid var(--line);padding:15px 17px;border-radius:13px;margin:12px 0;background:var(--panel);font-size:13px;line-height:1.55}
+.strict-setup-notice p{margin:6px 0 0;color:var(--muted)}
+.strict-setup-notice.is-incomplete{border-style:dashed;border-color:var(--muted)}
+.strict-setup-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.strict-setup-actions .btn{min-height:44px}
+.confirm-area-label{display:flex!important;flex-direction:row!important;align-items:center;gap:10px;font-size:13px}
+.confirm-area-label input{width:19px;height:19px;flex:0 0 19px;accent-color:#8e7afa}
+@media(max-width:700px){.strict-setup-actions .btn{flex:1 1 auto}}

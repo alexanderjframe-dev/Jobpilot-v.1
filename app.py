@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 from resume_parser import extract_resume_text, parse_resume
 from mobile_security import install_security, hosted_mode
 from extra_job_sources import discover_more
-from strict_eligibility import EDUCATION_LEVELS, parsed_area, strict_reason
+from strict_eligibility import EDUCATION_LEVELS, parsed_area, strict_reason, review_note
 
 ROOT = Path(__file__).resolve().parent
 DATA = Path(os.environ.get('JOBPILOT_DATA_DIR', str(ROOT / 'data'))).resolve()
@@ -62,7 +62,7 @@ DEFAULTS.update({
  'target_titles':'retail associate, warehouse associate, customer service, stocker, entry level, IT support',
  'skills':'customer service, technology, AI tools, budgeting, problem solving',
  'must_have_keywords':'','avoid_keywords':'senior, principal, director, unpaid, commission only',
- 'work_type':'any', 'schedule':'either', 'greenhouse_boards':'', 'lever_sites':'',
+ 'work_type':'any', 'schedule':'either', 'regular_jobs_enabled':True, 'greenhouse_boards':'', 'lever_sites':'',
  'scan_enabled':False, 'auto_queue_enabled':False, 'auto_submit_enabled':False,
  'remote_feed_enabled':True, 'sample_mode':False,
  'jobicy_enabled':True, 'remoteok_enabled':True,
@@ -352,6 +352,7 @@ def jobs_dict(rows):
   d['advanced']=bool(warning)
   d['qualification_note']=warning
   d['eligible']=not bool(warning)
+  d['review_note']=review_note(d) if not warning else ''
   d['sample']=bool(d['sample']);out.append(d)
  return out
 
@@ -465,6 +466,16 @@ async def list_jobs(query:str='',status:str='',min_score:int=0,sort:str='score',
  if q:rows=[j for j in rows if q in (j['title']+' '+j['company']+' '+j['location']+' '+j['description'][:1500]).lower()]
  if status:rows=[j for j in rows if j['status']==status]
  hidden_advanced=sum(1 for j in rows if j['advanced'] and j['status'] in ('discovered','skipped'))
+ hidden_reasons={'setup':0,'location':0,'qualifications_or_role':0}
+ for j in rows:
+  if not j['advanced'] or j['status'] not in ('discovered','skipped'):continue
+  note=str(j['qualification_note']).lower()
+  if 'choose your completed education' in note or 'confirm your exact city' in note or 'set a valid search location' in note:
+   hidden_reasons['setup']+=1
+  elif 'outside your selected city' in note or 'remote listing does not verify' in note or 'did not publish a location' in note:
+   hidden_reasons['location']+=1
+  else:
+   hidden_reasons['qualifications_or_role']+=1
  if not include_advanced:rows=[j for j in rows if not j['advanced'] or j['status'] not in ('discovered','skipped')]
  cfg=get_kv('config')
  if cfg.get('work_type')=='remote':rows=[j for j in rows if j['work_mode']=='remote']
@@ -476,7 +487,7 @@ async def list_jobs(query:str='',status:str='',min_score:int=0,sort:str='score',
  elif sort=='company':rows.sort(key=lambda x:x['company'].lower())
  elif sort=='pay':rows.sort(key=lambda x:x['min_hourly'] or 0,reverse=True)
  else:rows.sort(key=lambda x:x['score'],reverse=True)
- return {'jobs':rows[:max(1,min(limit,1000))],'total':len(rows),'hidden_advanced':hidden_advanced if not include_advanced else 0}
+ return {'jobs':rows[:max(1,min(limit,1000))],'total':len(rows),'hidden_advanced':hidden_advanced if not include_advanced else 0,'hidden_reasons':hidden_reasons if not include_advanced else {}}
 
 @app.post('/api/refresh')
 async def refresh():

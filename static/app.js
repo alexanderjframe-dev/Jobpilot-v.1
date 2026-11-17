@@ -67,8 +67,13 @@ async function uploadResume(file){
  try{
   const r=await api('/api/resume',{method:'POST',body:form,credentials:'same-origin'});
   await load();
-  status.className='success';status.textContent='Uploaded '+r.filename+'. On free hosting, uploads can disappear after a server restart.';
-  toast('Resume uploaded: '+r.filename,'success');
+  const info=r.autofill||{filled:[],found:[],warning:''};
+  const labels={first_name:'first name',last_name:'last name',email:'email',phone:'phone',city:'city',state:'state',linkedin:'LinkedIn',portfolio:'portfolio',summary:'summary',experience:'work experience',education:'education',skills:'skills'};
+  const filled=(info.filled||[]).map(k=>labels[k]||k.replaceAll('_',' '));
+  const detail=filled.length?'Auto-filled: '+filled.join(', ')+'.':(info.found||[]).length?'Existing profile details were kept. No empty fields needed filling.':'No profile details could be extracted.';
+  status.className=info.warning?'error':'success';
+  status.textContent='Uploaded '+r.filename+'. '+detail+(info.warning?' '+info.warning:'')+' Please review your information before applying. Free hosting can erase uploads after a restart.';
+  toast(filled.length?'Resume imported: '+filled.length+' profile fields filled.':'Resume uploaded. Review your profile.','success');
  }catch(e){
   const message=e.message.includes('(403)')?'Upload blocked (403). Open JobPilot directly in Safari and try again.':e.message.includes('(401)')?'Please reload and sign into JobPilot again (401).':e.message;
   status.className='error';status.textContent='Upload failed: '+message;

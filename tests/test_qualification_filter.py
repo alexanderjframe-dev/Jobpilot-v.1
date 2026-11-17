@@ -17,6 +17,8 @@ class QualificationMatchTests(unittest.TestCase):
         sys.modules.pop("app", None)
         cls.server = importlib.import_module("app")
         cls.client = TestClient(cls.server.app)
+        cls.client.put('/api/profile',json={'values':{'education_level':'ged'}})
+        cls.client.put('/api/config',json={'values':{'location':'Austin, TX','location_confirmed':True,'location_aliases':'Round Rock, TX'}})
 
     @classmethod
     def tearDownClass(cls):
@@ -27,7 +29,7 @@ class QualificationMatchTests(unittest.TestCase):
         cls.tmp.cleanup()
 
     def test_tech_lead_is_not_an_entry_level_match(self):
-        cfg = dict(self.server.DEFAULTS)
+        cfg = {**self.server.DEFAULTS, 'location':'Austin, TX', 'location_confirmed':True}
         job = {
             "title":"Tech Lead Full-Stack Rails Engineer",
             "company":"Mitre Media",
@@ -38,12 +40,12 @@ class QualificationMatchTests(unittest.TestCase):
             "description":"Lead the Rails application and support engineers"
         }
         self.assertIn("Senior", self.server.qualification_note(job,cfg))
-        score, reasons, metrics = self.server.score_job(job,cfg,dict(self.server.PROFILE_DEFAULTS))
+        score, reasons, metrics = self.server.score_job(job,cfg,{**self.server.PROFILE_DEFAULTS,'education_level':'ged'})
         self.assertLessEqual(score,30)
         self.assertTrue(any("Senior" in reason for reason in reasons))
 
     def test_higher_required_experience_is_flagged(self):
-        cfg = dict(self.server.DEFAULTS)
+        cfg = {**self.server.DEFAULTS, 'location':'Austin, TX', 'location_confirmed':True}
         job = {"title":"Customer Service Representative",
                "description":"Requirements: at least 5 years of customer service experience."}
         self.assertIn("5 years", self.server.qualification_note(job,cfg))
@@ -51,7 +53,7 @@ class QualificationMatchTests(unittest.TestCase):
         self.assertFalse(self.server.qualification_note(job,cfg))
 
     def test_enterprise_sales_engineer_from_jobicy_is_hidden(self):
-        cfg = dict(self.server.DEFAULTS)
+        cfg = {**self.server.DEFAULTS, 'location':'Austin, TX', 'location_confirmed':True}
         job = {
             "title":"Sales Engineer, Enterprise",
             "company":"Socket",
@@ -69,19 +71,19 @@ class QualificationMatchTests(unittest.TestCase):
         self.assertEqual(
             self.server.EXP_YEARS_RE.search(job["description"]).group(1),"7"
         )
-        score,reasons,_ = self.server.score_job(job,cfg,dict(self.server.PROFILE_DEFAULTS))
+        score,reasons,_ = self.server.score_job(job,cfg,{**self.server.PROFILE_DEFAULTS,'education_level':'ged'})
         self.assertLessEqual(score,30)
         self.assertTrue(any("Enterprise" in text for text in reasons))
 
     def test_written_plus_years_is_recognized_without_enterprise_title(self):
-        cfg=dict(self.server.DEFAULTS)
+        cfg={**self.server.DEFAULTS, 'location':'Austin, TX', 'location_confirmed':True}
         job={"title":"Customer Support Specialist",
              "description":"Required: 7 plus years of customer service experience."}
         self.assertIn("7 years",self.server.qualification_note(job,cfg))
 
     def test_misspelled_lao_interpreter_is_a_specialist_not_a_normal_match(self):
         """Regression for the real listing title, including source typos."""
-        cfg=dict(self.server.DEFAULTS)
+        cfg={**self.server.DEFAULTS, 'location':'Austin, TX', 'location_confirmed':True}
         job={
             "title":"Internatioal Audio/Video Remote Lao/Loatian Interpreter",
             "location":"USA",
@@ -91,12 +93,12 @@ class QualificationMatchTests(unittest.TestCase):
         }
         note=self.server.qualification_note(job,cfg)
         self.assertIn("proficiency",note)
-        score,reasons,_=self.server.score_job(job,cfg,dict(self.server.PROFILE_DEFAULTS))
+        score,reasons,_=self.server.score_job(job,cfg,{**self.server.PROFILE_DEFAULTS,'education_level':'ged'})
         self.assertLessEqual(score,30)
         self.assertTrue(any("proficiency" in reason for reason in reasons))
 
     def test_other_language_titles_require_proficiency_check(self):
-        cfg=dict(self.server.DEFAULTS)
+        cfg={**self.server.DEFAULTS, 'location':'Austin, TX', 'location_confirmed':True}
         for title in ("Spanish Interpreter", "Japanese-English Translator",
                       "Multilingual Customer Service Representative",
                       "Bilingual Sales Associate", "Language Interpreter (Lao)",
@@ -106,7 +108,7 @@ class QualificationMatchTests(unittest.TestCase):
                 self.assertTrue(note, title)
 
     def test_license_roles_flagged_but_regular_entry_level_jobs_remain(self):
-        cfg=dict(self.server.DEFAULTS)
+        cfg={**self.server.DEFAULTS, 'location':'Austin, TX', 'location_confirmed':True}
         for title in ("Registered Nurse", "Licensed Practical Nurse",
                       "CDL-A Truck Driver", "Licensed Electrician", "Attorney"):
             with self.subTest(title=title):
@@ -139,13 +141,13 @@ class QualificationMatchTests(unittest.TestCase):
             conn.execute("DELETE FROM jobs WHERE url=?", (job["url"],))
 
     def test_optional_preferred_years_are_not_hard_blocked(self):
-        cfg = dict(self.server.DEFAULTS)
+        cfg = {**self.server.DEFAULTS, 'location':'Austin, TX', 'location_confirmed':True}
         job = {"title":"Retail Assistant",
                "description":"5+ years of customer service experience preferred."}
         self.assertFalse(self.server.qualification_note(job,cfg))
 
     def test_entry_roles_and_shift_leads_are_not_excluded(self):
-        cfg = dict(self.server.DEFAULTS)
+        cfg = {**self.server.DEFAULTS, 'location':'Austin, TX', 'location_confirmed':True}
         for title in ["Junior IT Help Desk", "Warehouse Associate",
                       "Customer Support Agent", "Retail Shift Lead"]:
             with self.subTest(title=title):
@@ -156,7 +158,7 @@ class QualificationMatchTests(unittest.TestCase):
         base = {
             "company":"Test JobPilot Org",
             "location":"Austin, TX",
-            "description":"Paid training",
+            "description":"Paid training is provided to everyone in this opening.",
         }
         for name,url in [
             ("Junior Customer Support Agent","https://example.org/junior-qual-test"),

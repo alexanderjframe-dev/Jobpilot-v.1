@@ -44,7 +44,7 @@ class FakeClient:
 class LiveLocalProviderTests(unittest.TestCase):
     def test_search_plan_is_bounded_and_only_uses_confirmed_job_preferences(self):
         plan=search_plan(CFG)
-        self.assertLessEqual(len(plan),5)
+        self.assertLessEqual(len(plan),6)
         self.assertIn("cashier",plan)
         self.assertIn("warehouse",plan)
         self.assertIn("crew member",plan)

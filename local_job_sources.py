@@ -21,7 +21,7 @@ DEFAULT_TERMS = ("cashier", "warehouse", "customer service", "crew member", "sto
 MAX_TERMS = 6
 
 def search_plan(cfg):
-    """4-5 deliberately broad searches to respect a shared server IP's rate limit."""
+    """Up to six broad searches, cached to respect the shared server IP limit."""
     titles = [x.strip().lower() for x in re.split(r"[,;\n]", str(cfg.get("target_titles") or "")) if x.strip()]
     if cfg.get("regular_jobs_enabled", True):
         terms = list(DEFAULT_TERMS)

@@ -41,6 +41,7 @@ When you upload a PDF, DOCX, or TXT resume from Applicant Profile, JobPilot read
 - Your existing profile entries are **not overwritten**. You can review and edit every imported field.
 - JobPilot never guesses work authorization or visa sponsorship answers.
 - Some resume formatting and scanned/image-only PDFs cannot be read automatically; export a text-based PDF or DOCX instead.
+- The parser recognizes common and alternative headings (e.g. **What I Bring**, **Core Skills & Strengths**) and inline section labels. If those sections are absent, it may list **skills explicitly named** elsewhere and create a brief **draft summary from a stated work responsibility**. It will leave a field blank when there is insufficient evidence. Always review drafts before applying.
 - The parser is rule-based and may misread unusual layouts. Check the imported information before using it in a real application.
 - No external AI parsing service is used; resumes stay with JobPilot's configured storage. A free Render web service may erase uploaded files and saved profiles when restarted or redeployed.
 

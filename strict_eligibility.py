@@ -50,9 +50,9 @@ ROLE_FAMILIES = {
 # Match listed minimum education; "preferred" is handled separately.
 DEGREE_PATTERNS = [
  (6, re.compile(r'\b(?:ph\.?d\.?|doctorate|doctoral degree|doctor of \w+)\b',re.I)),
- (5, re.compile(r'\b(?:master(?:[’' + "'" + r']s)?(?: degree)?|m\.?s\.?c?\.? degree)\b',re.I)),
- (4, re.compile(r'\b(?:bachelor(?:[’' + "'" + r']s)?(?: degree)?|four[- ]year degree|college degree|b\.?s\.? degree|b\.?a\.? degree)\b',re.I)),
- (3, re.compile(r'\b(?:associate(?:[’' + "'" + r']s)?(?: degree)?|two[- ]year degree)\b',re.I)),
+ (5, re.compile(r"\b(?:master(?:['’]s)?(?: degree)?|m\.?s\.?c?\.? degree)\b",re.I)),
+ (4, re.compile(r"\b(?:bachelor(?:['’]s)?(?: degree)?|four[- ]year degree|college degree|b\.?s\.? degree|b\.?a\.? degree)\b",re.I)),
+ (3, re.compile(r"\b(?:associate(?:['’]s)?(?: degree)?|two[- ]year degree)\b",re.I)),
  (1, re.compile(r'\b(?:high school diploma|high school graduate|ged|general educational development|high school equivalency)\b',re.I)),
 ]
 LOWER_ROLE_WORDS = {'job','jobs','work','full','time','part','level','entry','junior','associate','trainee','positions','position','remote'}

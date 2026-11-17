@@ -160,7 +160,7 @@ def role_reason(job,cfg):
     for target in targets:
         if target in {'entry level','entry-level','jobs','any','all jobs'}:
             continue
-        if target in title or title in target:
+        if target in title:
             return ''
         for family,pattern in ROLE_FAMILIES.items():
             if pattern.search(target) and pattern.search(title):

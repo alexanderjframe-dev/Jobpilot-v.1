@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 from resume_parser import extract_resume_text, parse_resume
 from mobile_security import install_security, hosted_mode
 from extra_job_sources import discover_more
+from local_job_sources import discover_local, search_plan, PROVIDER as LOCAL_PROVIDER
 from strict_eligibility import EDUCATION_LEVELS, parsed_area, strict_reason, review_note
 
 ROOT = Path(__file__).resolve().parent
@@ -65,7 +66,7 @@ DEFAULTS.update({
  'work_type':'any', 'schedule':'either', 'regular_jobs_enabled':True, 'greenhouse_boards':'', 'lever_sites':'',
  'scan_enabled':False, 'auto_queue_enabled':False, 'auto_submit_enabled':False,
  'remote_feed_enabled':True, 'sample_mode':False,
- 'jobicy_enabled':True, 'remoteok_enabled':True,
+ 'jobicy_enabled':True, 'remoteok_enabled':True, 'veritahire_enabled':True,
  'adzuna_enabled':True, 'jsearch_enabled':True, 'usajobs_enabled':True,
 })
 PROFILE_DEFAULTS = { 'first_name':'', 'last_name':'', 'email':'', 'phone':'', 'city':'', 'state':'',
@@ -301,7 +302,26 @@ def normalized_date(v):
 
 async def fetch_jobs():
  cfg=get_kv('config'); items=[];errors=[]; counts={}
+ # A free provider allows 30 searches per hour per IP (Render may share an IP).
+ # Cache provider scans per chosen city + search terms for 30 minutes, without
+ # storing or sharing applicant profile fields or provider credentials.
+ local_enabled=bool(cfg.get('veritahire_enabled',True) and cfg.get('location_confirmed') and parsed_area(cfg.get('location')))
+ terms=search_plan(cfg) if local_enabled else []
+ local_key=hashlib.sha256(json.dumps([cfg.get('location'),terms],sort_keys=True).encode()).hexdigest() if local_enabled else ''
+ previous_local=get_kv('local_source_cache') if local_enabled else {}
+ previous_at=previous_local.get('at') if isinstance(previous_local,dict) else None
+ try:
+  previous_age=(datetime.now(timezone.utc)-datetime.fromisoformat(previous_at)).total_seconds() if previous_at else 999999
+ except (TypeError,ValueError,OverflowError):
+  previous_age=999999
+ cached=bool(local_enabled and previous_local.get('key')==local_key and 0<=previous_age<1800)
+ local_task=None
  async with httpx.AsyncClient(timeout=18,headers={'User-Agent':'JobPilot/1.0 (local personal job discovery tool)','Accept':'application/json'},follow_redirects=True) as client:
+  if local_enabled and not cached:
+   # Start local search alongside existing remote feeds to reduce refresh delay.
+   local_task=asyncio.create_task(discover_local(client,cfg,items,counts,errors))
+  elif cached:
+   counts[LOCAL_PROVIDER+' (cached from last scan)']=int(previous_local.get('count') or 0)
   async def grab(name,url,parser):
    try:
     r=await client.get(url);r.raise_for_status();arr=parser(r.json());
@@ -335,7 +355,13 @@ async def fetch_jobs():
     return out
    await grab('Lever: '+token,'https://api.lever.co/v0/postings/'+token+'?mode=json',lev)
   await discover_more(client, cfg, items, counts, errors)
- if not items and not errors:errors.append('No sources enabled. Enable Remotive or add an employer board token.')
+  if local_task is not None:
+   success=await local_task
+   if success:
+    set_kv('local_source_cache',{'key':local_key,'at':now(),'count':counts.get(LOCAL_PROVIDER,0)})
+  elif cfg.get('veritahire_enabled',True) and not local_enabled:
+   counts[LOCAL_PROVIDER+' (confirm city first)']=0
+ if not items and not errors and not cached:errors.append('No postings returned by enabled feeds. Check your confirmed search city and source settings.')
  result=upsert_jobs(items)
  set_kv('last_scan',{'at':now(),'counts':counts,'errors':errors,**result})
  log(f"Feed refresh: {result['new']} new jobs, {result['processed']} checked" + (f"; {len(errors)} source errors" if errors else ''), 'warning' if errors else 'success')

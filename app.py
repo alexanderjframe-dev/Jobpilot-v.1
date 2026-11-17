@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 from resume_parser import extract_resume_text, parse_resume
 from mobile_security import install_security, hosted_mode
 from extra_job_sources import discover_more
+from strict_eligibility import EDUCATION_LEVELS, parsed_area, strict_reason
 
 ROOT = Path(__file__).resolve().parent
 DATA = Path(os.environ.get('JOBPILOT_DATA_DIR', str(ROOT / 'data'))).resolve()
@@ -57,7 +58,7 @@ SLIDERS = [
 SLIDER_MAP = {x[0]:x for x in SLIDERS}
 DEFAULTS = {row[0]:row[2] for row in SLIDERS}
 DEFAULTS.update({
- 'location':'Austin, TX', 'location_aliases':'Liberty Hill, TX; Cedar Park, TX; Round Rock, TX',
+ 'location':'Austin, TX', 'location_aliases':'Liberty Hill, TX; Cedar Park, TX; Round Rock, TX', 'location_confirmed':False,
  'target_titles':'retail associate, warehouse associate, customer service, stocker, entry level, IT support',
  'skills':'customer service, technology, AI tools, budgeting, problem solving',
  'must_have_keywords':'','avoid_keywords':'senior, principal, director, unpaid, commission only',
@@ -69,7 +70,7 @@ DEFAULTS.update({
 })
 PROFILE_DEFAULTS = { 'first_name':'', 'last_name':'', 'email':'', 'phone':'', 'city':'', 'state':'',
  'linkedin':'','portfolio':'', 'work_authorized':'', 'sponsorship':'', 'summary':'',
- 'experience':'', 'education':'', 'skills':'', 'resume_filename':'', 'resume_path':'' }
+ 'experience':'', 'education':'', 'education_level':'', 'skills':'', 'resume_filename':'', 'resume_path':'' }
 
 @contextmanager
 def db():
@@ -111,7 +112,8 @@ def initialize():
 def get_kv(key):
  with db() as c:
   r=c.execute('SELECT value FROM kv WHERE key=?',(key,)).fetchone()
-  return json.loads(r['value']) if r else {}
+  value=json.loads(r['value']) if r else {}
+  return {**PROFILE_DEFAULTS,**value} if key=='profile' else value
 
 def set_kv(key,value):
  with db() as c:
@@ -251,8 +253,8 @@ def score_job(job, cfg, profile):
  score=round(sum(weights[k]*metrics[k] for k in weights)/denominator)
  if cfg.get('work_type')=='remote' and mode!='remote':score=max(0,score-28)
  if cfg.get('work_type')=='onsite' and mode=='remote':score=max(0,score-15)
- level_warning=qualification_note(job,cfg)
- if level_warning:score=min(score,30)
+ level_warning=strict_reason(job,cfg,profile,qualification_note)
+ if level_warning:score=min(score,10)
  reasons=[]
  if level_warning:reasons.append(level_warning)
  if title_overlap: reasons.append('Title aligns with your interests')
@@ -281,7 +283,8 @@ def upsert_jobs(items):
     c.execute('''UPDATE jobs SET score=?,reasons=?,metrics=?,updated_at=?, description=?,salary=?,min_hourly=? WHERE id=?''',
               (score,json.dumps(reasons),json.dumps(metrics),now(),j.get('description','')[:13000],j.get('salary',''),j.get('min_hourly'),old['id']))
    else:
-    status='saved' if cfg.get('auto_queue_enabled') and score>=cfg['auto_queue_threshold'] and not j.get('sample') else 'discovered'
+    eligible=not strict_reason(j,cfg,profile,qualification_note)
+    status='saved' if eligible and cfg.get('auto_queue_enabled') and score>=cfg['auto_queue_threshold'] and not j.get('sample') else 'discovered'
     c.execute('''INSERT INTO jobs(id,source,source_id,company,title,location,work_mode,employment_type,salary,min_hourly,description,url,posted_at,sample,status,score,reasons,metrics,created_at,updated_at)
       VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
       (jid,source,str(ident),str(j.get('company') or 'Unknown')[:200],str(j.get('title') or 'Untitled')[:200],str(j.get('location') or '')[:200],str(j.get('work_mode') or 'onsite'),str(j.get('employment_type') or '')[:80],str(j.get('salary') or '')[:120],j['min_hourly'],str(j.get('description') or '')[:13000],url,j.get('posted_at'),int(bool(j.get('sample'))),status,score,json.dumps(reasons),json.dumps(metrics),now(),now()))
@@ -339,15 +342,16 @@ async def fetch_jobs():
  return get_kv('last_scan')
 
 def jobs_dict(rows):
- out=[];cfg=get_kv('config')
+ out=[];cfg=get_kv('config');profile=get_kv('profile')
  for r in rows:
   d=dict(r)
   for key in ('reasons','metrics'):
    try:d[key]=json.loads(d[key])
    except:d[key]=[] if key=='reasons' else {}
-  warning=qualification_note(d,cfg)
+  warning=strict_reason(d,cfg,profile,qualification_note)
   d['advanced']=bool(warning)
   d['qualification_note']=warning
+  d['eligible']=not bool(warning)
   d['sample']=bool(d['sample']);out.append(d)
  return out
 
@@ -404,6 +408,13 @@ async def save_config(payload:JsonObject):
   elif k in old:
    if isinstance(old[k],bool): updated[k]=bool(v) if isinstance(v,bool) else str(v).lower()=='true'
    elif isinstance(old[k],str):updated[k]=str(v)[:1600]
+ # Only a user-confirmed, structured city/state may drive strict location matching.
+ if updated.get('location_confirmed') and not parsed_area(updated.get('location')):
+  raise HTTPException(400,'Enter a real city and US state, e.g. Dallas, TX, before confirming your search area')
+ if updated.get('location')!=old.get('location'):
+  if 'location_confirmed' not in payload.values:updated['location_confirmed']=False
+  if updated.get('location_aliases')==DEFAULTS['location_aliases']:
+   updated['location_aliases']=''  # Prevent Austin starter suburbs following a changed city.
  # no automatic submits in recurring scans; mode only allows manually approved per-job run
  set_kv('config',updated);recalculate();log('Preferences updated')
  return {'ok':True,'config':updated}
@@ -413,7 +424,10 @@ async def save_profile(payload:JsonObject):
  old=get_kv('profile')
  for k,v in payload.values.items():
   if k in old and k not in ('resume_path','resume_filename'):
-   old[k]=str(v)[:5000]
+   if k=='education_level':
+    if str(v) and str(v) not in EDUCATION_LEVELS:raise HTTPException(400,'Choose a valid completed education level')
+    old[k]=str(v)
+   else:old[k]=str(v)[:5000]
  set_kv('profile',old);recalculate();log('Applicant profile updated')
  return {'ok':True,'profile':old}
 

@@ -82,9 +82,19 @@ REGULAR_JOB_RE = re.compile(
     re.I
 )
 
+PROFESSIONAL_TITLE_RE = re.compile(
+    r'\b(?:software engineer|sales engineer|solutions? engineer|data engineer|'
+    r'cloud engineer|platform engineer|cybersecurity engineer|security engineer|'
+    r'full[\s-]?stack engineer|devops engineer|machine learning engineer|'
+    r'data scientist|research scientist|solutions? architect|cloud architect|'
+    r'account executive|investment banker|financial analyst|'
+    r'project manager|product manager|territory manager)\b',re.I
+)
+
 def regular_job_title(title):
-    """Conservative indicator of routine entry-level work, not a guarantee."""
-    return bool(REGULAR_JOB_RE.search(str(title or '')))
+    """Routine work, excluding specialist titles even when words overlap."""
+    title=str(title or '')
+    return not PROFESSIONAL_TITLE_RE.search(title) and bool(REGULAR_JOB_RE.search(title))
 
 
 MANAGEMENT_RE = re.compile(

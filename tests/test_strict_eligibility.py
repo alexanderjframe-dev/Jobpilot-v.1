@@ -53,6 +53,18 @@ class StrictEligibilityTests(unittest.TestCase):
         self.assertIn("Remote",self.check(job("Customer Support Agent", "Canada only", "remote")))
         self.assertIn("Remote",self.check(job("Customer Support Agent", "California", "remote")))
 
+    def test_remote_description_can_confirm_residency(self):
+        self.assertEqual(self.check(job(
+            "Customer Support Agent", "Remote", "remote",
+            "Applicants must be based in the United States and provide customer support.")), "")
+        self.assertEqual(self.check(job(
+            "Customer Support Agent", "Remote", "remote",
+            "Applicants must be based in Texas to handle customer support calls.")), "")
+
+    def test_county_name_does_not_silently_expand_city(self):
+        self.assertIn("outside",self.check(job(
+            "Warehouse Associate","Dallas County, Texas")).lower())
+
     def test_remote_state_restrictions_override_usa(self):
         j=job("Customer Support Agent","United States","remote",
               "Remote in United States, but must be based in California.")

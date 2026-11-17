@@ -41,7 +41,7 @@ function renderPreferences(){const all=state.boot.sliders;$('#sliderCount').text
  $$('[data-config]').forEach(el=>{const v=state.boot.config[el.dataset.config];if(el.type==='checkbox')el.checked=!!v;else el.value=v??'';});}
 function renderProfile(){
  const p=state.boot.profile;
- $('[data-profile]').forEach(el=>el.value=p[el.dataset.profile]??'');
+ $$('[data-profile]').forEach(el=>el.value=p[el.dataset.profile]??'');
  $('#resumeName').textContent=p.resume_filename||'No resume uploaded yet';
  const first=String(p.first_name||'').trim().toLowerCase();
  const last=String(p.last_name||'').trim().toLowerCase();

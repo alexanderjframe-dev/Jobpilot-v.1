@@ -16,6 +16,15 @@ class MobileSecurityTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 install_security(FastAPI())
 
+    def test_render_hosting_requires_password_even_without_manual_flag(self):
+        with patch.dict(os.environ, {
+            'RENDER': 'true',
+            'JOBPILOT_HOSTED': '0',
+            'JOBPILOT_ACCESS_PASSWORD': ''
+        }):
+            with self.assertRaises(RuntimeError):
+                install_security(FastAPI())
+
     def test_hosted_auth_and_cross_site_protection(self):
         with patch.dict(os.environ, {'JOBPILOT_HOSTED': '1', 'JOBPILOT_ACCESS_PASSWORD': 'long-password-here-1234'}):
             app = FastAPI()

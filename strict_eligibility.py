@@ -56,6 +56,21 @@ DEGREE_PATTERNS = [
  (1, re.compile(r'\b(?:high school diploma|high school graduate|ged|general educational development|high school equivalency)\b',re.I)),
 ]
 LOWER_ROLE_WORDS = {'job','jobs','work','full','time','part','level','entry','junior','associate','trainee','positions','position','remote'}
+MANAGEMENT_RE = re.compile(
+ r'\b(?:manager|supervisor|superintendent|head of|director|executive|chief|president|'
+ r'principal|team lead|shift lead|crew lead|crew leader|lead associate|'
+ r'lead (?:customer|retail|warehouse|technical|it|support|sales|store|service|operations))\b',re.I)
+CREDENTIAL_RE = re.compile(
+ r'\b(?:cdl(?:[- ]?[ab])?|commercial driver[’' + "'" + r']s license|'
+ r'comp\s?tia\s?(?:a\+|security\+|network\+)|'
+ r'professional licen[cs]e|active (?:rn|lpn) license|security clearance|'
+ r'forklift certification|pmp certification)\b',re.I)
+MANDATORY_RE = re.compile(r'\b(?:required|must|mandatory|need to have|you need|minimum qualification|valid|active|current)\b',re.I)
+NON_ENGLISH_LANGUAGE_RE = re.compile(
+ r'\b(?:spanish|french|german|lao|laotian|mandarin|cantonese|chinese|japanese|'
+ r'korean|vietnamese|arabic|hindi|urdu|portuguese|russian|italian|'
+ r'somali|amharic|tagalog|filipino|polish|thai|swahili|haitian creole)\b',re.I)
+
 
 def parsed_area(raw):
     """Accept an explicit U.S. city and state, never a guessed state."""
@@ -200,11 +215,25 @@ def strict_reason(job,cfg,profile,qualification_note=None):
             return note
     title=str(job.get('title') or '')
     # General management and leadership jobs aren't normal entry-level matches.
-    if re.search(r'\b(?:manager|supervisor|superintendent|head of|director|executive|chief|president|principal)\b',title,re.I):
+    if MANAGEMENT_RE.search(title):
         return 'Management or leadership role is not an entry-level match'
     if len(str(job.get('description') or '').strip()) < 20:
         return 'Job description lacks enough detail to check requirements'
-    required=required_education(job.get('description',''))
+    description=str(job.get('description') or '')
+    # Explicit mandatory credentials cannot be inferred from resume keywords.
+    for match in CREDENTIAL_RE.finditer(description[:11000]):
+        context=description[max(0,match.start()-65):min(len(description),match.end()+70)]
+        if MANDATORY_RE.search(context) and not re.search(
+            r'\b(?:preferred|a plus|nice to have|optional|not required)\b',context,re.I):
+            return 'Posting states a mandatory license or certification that JobPilot has not verified'
+    # A fluent non-English language is an essential requirement, not a keyword overlap.
+    for match in NON_ENGLISH_LANGUAGE_RE.finditer(description[:11000]):
+        context=description[max(0,match.start()-65):min(len(description),match.end()+60)]
+        if re.search(r'\b(?:fluen(?:t|cy)|bilingual|native speaker|proficient|must speak|'
+                     r'language proficiency|translation|interpreter)\b',context,re.I) and not re.search(
+                     r'\b(?:preferred|optional|nice to have|bonus|a plus)\b',context,re.I):
+            return 'Posting requires specialized language fluency that JobPilot has not verified'
+    required=required_education(description)
     actual=EDUCATION_LEVELS[level]
     if required>actual:
         needed=min((name for name,rank in EDUCATION_LEVELS.items() if rank==required),

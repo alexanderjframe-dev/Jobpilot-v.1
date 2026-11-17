@@ -348,6 +348,7 @@ app=FastAPI(title='JobPilot',version='1.1.0')
 install_security(app)
 app.mount('/static',StaticFiles(directory=ROOT/'static'),name='static')
 initialize()
+recalculate()  # Apply new qualification limits to listings from prior scans.
 scan_lock=asyncio.Lock()
 
 class JsonObject(BaseModel):
@@ -434,6 +435,7 @@ async def list_jobs(query:str='',status:str='',min_score:int=0,sort:str='score',
  q=query.strip().lower()
  if q:rows=[j for j in rows if q in (j['title']+' '+j['company']+' '+j['location']+' '+j['description'][:1500]).lower()]
  if status:rows=[j for j in rows if j['status']==status]
+ hidden_advanced=sum(1 for j in rows if j['advanced'] and j['status'] in ('discovered','skipped'))
  if not include_advanced:rows=[j for j in rows if not j['advanced'] or j['status'] not in ('discovered','skipped')]
  cfg=get_kv('config')
  if cfg.get('work_type')=='remote':rows=[j for j in rows if j['work_mode']=='remote']
@@ -445,7 +447,7 @@ async def list_jobs(query:str='',status:str='',min_score:int=0,sort:str='score',
  elif sort=='company':rows.sort(key=lambda x:x['company'].lower())
  elif sort=='pay':rows.sort(key=lambda x:x['min_hourly'] or 0,reverse=True)
  else:rows.sort(key=lambda x:x['score'],reverse=True)
- return {'jobs':rows[:max(1,min(limit,1000))],'total':len(rows)}
+ return {'jobs':rows[:max(1,min(limit,1000))],'total':len(rows),'hidden_advanced':hidden_advanced if not include_advanced else 0}
 
 @app.post('/api/refresh')
 async def refresh():
